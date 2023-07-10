@@ -2,13 +2,14 @@ import gc
 import json
 import math
 import time
+import adafruit_datetime as datetime
 import adafruit_requests as requests
 from rtc import RTC
 
 from app.constants import DEBUG, NTP_TIMEZONE, OCTOPUS_API_URL, OCTOPUS_PRODUCT_CODE
 
 DATETIME_API = f"http://worldtimeapi.org/api/timezone/{NTP_TIMEZONE}"
-OCTOPUS_TARIFF_CODE = f"E-1R-{OCTOPUS_PRODUCT_CODE}-C"
+OCTOPUS_TARIFF_CODE = f"E-1R-{OCTOPUS_PRODUCT_CODE}-A"
 
 
 def logger(msg, *args):
@@ -47,45 +48,48 @@ def matrix_rotation(accelerometer):
 def fetch_json(url, retry_count=3):
     failures = 0
     response = None
-    logger(f"json fetch: url={url} retry_count={retry_count}")
+    logger(f"JSON Fetch: URL={url} Retries={retry_count}")
     while not response:
         try:
             response = requests.get(url)
             failures = 0
         except AssertionError as error:
-            logger(f"fetch retrying: error={error}")
+            logger(f"JSON Fetch Retry: {error}")
             failures += 1
             if failures >= retry_count:
-                raise AssertionError("fetch error") from error
+                raise AssertionError("JSON Fetch Error") from error
             continue
-    gc.collect()
     return json.loads(response.text)
 
 
 def set_current_time():
-    logger("network time: fetching time")
+    logger("Setting Time from Network")
     try:
         resp = fetch_json(DATETIME_API)
         timestamp = resp["datetime"]
-        logger(f"network time: fetched timestamp={timestamp}")
+        logger(f"Time: {timestamp}")
         timetuple = parse_timestamp(resp["datetime"])
         RTC().datetime = timetuple
         gc.collect()
     except Exception as error:
-        logger(f"network time fetch failed: error={error}")
+        logger(f"Failed Network Time Fetch: {error}")
 
-def get_octopus_agile_rates(period_from, period_to):
-    gc.collect()
-    try:
-        base_url = f"{OCTOPUS_API_URL}/v1/products/{OCTOPUS_PRODUCT_CODE}/electricity-tariffs/{OCTOPUS_TARIFF_CODE}"
-        url = f"{base_url}/standard-unit-rates?period_from={period_from}&period_to={period_to}"
-        logger(f"Octopus API: Get Agile Rates: url={url}")
-        resp = fetch_json(url)
-        gc.collect()
-        return resp
-    except Exception as error:
-        logger(f"Octopus API: Failed: error={error}")
         
+def get_current_and_next_agile_rates():
+    now = datetime.datetime.now()
+    rounded_minute = 0 if now.minute < 30 else 30
+    period_from = now.replace(minute=rounded_minute, second=0, microsecond=0, tzinfo=None)
+    period_to = period_from + datetime.timedelta(hours=1)
+    logger(f"Time Periods: Now={now.isoformat()} From={period_from.isoformat()} End={period_to.isoformat()}")
+    url = f"{OCTOPUS_API_URL}/v1/products/{OCTOPUS_PRODUCT_CODE}/electricity-tariffs/{OCTOPUS_TARIFF_CODE}/standard-unit-rates?period_from={period_from}&period_to={period_to}"
+    resp = fetch_json(url)
+    sorted_data = sorted(resp["results"], key=lambda x: x["valid_from"])
+    rates = []
+    for r in sorted_data:
+        dt_from = datetime.datetime.fromisoformat(r["valid_from"][:-1]) + datetime.timedelta(hours=1)
+        rates.append((dt_from.isoformat(), r["value_inc_vat"] / 100))
+    return rates
+
 
 def get_new_epochs(ts_last=None):
     now = RTC().datetime

@@ -16,14 +16,13 @@ FONT = terminalio.FONT
 
 from app.constants import (
     DEBUG,
-    BRIGHTNESS,
     MATRIX_WIDTH,
     MATRIX_HEIGHT,
     MATRIX_BIT_DEPTH,
     MATRIX_COLOR_ORDER,
 )
 
-from app.utils import logger, matrix_rotation, get_new_epochs, set_current_time, get_octopus_agile_rates
+from app.utils import logger, matrix_rotation, get_new_epochs, set_current_time, get_current_and_next_agile_rates
 
 gc.collect()
 
@@ -36,18 +35,8 @@ class CellLabel(Label):
 
 
 logger(
-    f"debug={DEBUG} brightness={BRIGHTNESS}"
+    f"Config: debug={DEBUG} matrix_width={MATRIX_WIDTH} matrix_height={MATRIX_HEIGHT}"
 )
-logger(
-    f"matrix_width={MATRIX_WIDTH} matrix_height={MATRIX_HEIGHT} matrix_bit_depth={MATRIX_BIT_DEPTH} matrix_color_order={MATRIX_COLOR_ORDER}"
-)
-
-# LOCAL VARS
-client = None
-
-# STATIC RESOURCES
-# logger("loading static resources")
-# font_bitocra = bitmap_font.load_font("/bitocra7.bdf")
 
 # RGB MATRIX
 logger("Configuring RGB Matrix")
@@ -62,7 +51,7 @@ _ = accelerometer.acceleration  # drain startup readings
 
 # SPLASH
 splash_group = Group()
-splash_group.append(Label(x=1, y=4, font=FONT, text="Wideboy Jr", color=0x220022))
+splash_group.append(Label(x=1, y=4, font=FONT, text="agileBoard", color=0x220022))
 
 # DISPLAY / FRAMEBUFFER
 logger("Configuring Display")
@@ -85,27 +74,22 @@ logger(f"Host ID: {host_id}")
 set_current_time()
 
 # API TEST
-now = datetime.datetime.now()
-now_hour = now.hour
-period_from = now.replace(minute=0, second=0, microsecond=0)
-period_to = period_from + datetime.timedelta(hours=6)
-
-rates = get_octopus_agile_rates(period_from.isoformat(), period_to.isoformat())
-
-for r in rates:
-    logger(f"Octopus API: rate={r}")
-
+#rates = get_current_and_next_agile_rates()
+#logger(f"Rates: {rates}")
+    
 # SCREEN
 root_group = Group()
-label_wideboy = CellLabel("WB Jr", 0x222222)
-root_group.append(label_wideboy)
+label_rate = CellLabel("Rate", 0x222222)
+root_group.append(label_rate)
+label_frame = CellLabel("Frame", 0x222222, x=48) 
+root_group.append(label_frame)
 
 
 
 # DRAW
 def draw(state):
-    global label_wideboy
-    label_wideboy.text = str(state["frame"])
+    global label_frame
+    label_frame.text = str(state["frame"])
     logger(f"Draw: state={state}")
 
 
@@ -123,6 +107,9 @@ def run():
         gc.collect()
         try:
             draw(state)
+            if state["frame"] % 10 == 0:
+                rates = get_current_and_next_agile_rates()
+                logger(f"Rates: {rates}")
             state["frame"] += 1
         except Exception as e:
             print("EXCEPTION", e)
