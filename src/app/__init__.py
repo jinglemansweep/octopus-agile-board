@@ -88,8 +88,10 @@ root_group.append(label_frame)
 
 # DRAW
 def draw(state):
-    global label_frame
+    global label_frame, label_rate
     label_frame.text = str(state["frame"])
+    if "rates" in state:
+        label_rate.text = f"{state['rates'][0][1]:,.02f}"
     logger(f"Draw: state={state}")
 
 
@@ -107,9 +109,8 @@ def run():
         gc.collect()
         try:
             draw(state)
-            if state["frame"] % 10 == 0:
-                rates = get_current_and_next_agile_rates()
-                logger(f"Rates: {rates}")
+            if state["frame"] % 60 == 0:
+                state["rates"] = get_current_and_next_agile_rates()
             state["frame"] += 1
         except Exception as e:
             print("EXCEPTION", e)
