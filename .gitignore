@@ -1,0 +1,5 @@
+secrets.py
+secrets.*.py
+.backup
+__pycache__
+venv

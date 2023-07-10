@@ -1,0 +1,8 @@
+{
+  "editor.formatOnSave": true,
+  "editor.formatOnPaste": true,
+  "python.analysis.diagnosticSeverityOverrides": {
+    "reportMissingImports": "none",
+    "reportShadowedImports": "none"
+  }
+}
