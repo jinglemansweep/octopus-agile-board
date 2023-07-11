@@ -107,6 +107,8 @@ def get_current_and_next_agile_rates():
     return rates
 
 
+
+
 def get_new_epochs(ts_last=None):
     now = RTC().datetime
     ts = time.monotonic()

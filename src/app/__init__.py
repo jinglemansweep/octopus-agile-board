@@ -8,6 +8,7 @@ import adafruit_esp32spi.adafruit_esp32spi_socket as socket
 import adafruit_requests as requests
 from adafruit_bitmap_font import bitmap_font
 from adafruit_display_text.label import Label
+from adafruit_display_shapes.rect import Rect
 from adafruit_lis3dh import LIS3DH_I2C
 from adafruit_matrixportal.matrix import Matrix
 from adafruit_matrixportal.network import Network
@@ -24,12 +25,9 @@ from app.constants import (
     COLOR_RED_DARK,
     COLOR_BLUE_DARK,
     COLOR_GREEN_DARK,
-    COLOR_MAGENTA_DARK
-
-
 )
 
-from app.graphics import make_box
+from app.graphics import make_box, rate_to_color
 
 from app.utils import (
     logger,
@@ -107,24 +105,51 @@ root_group.append(box_date)
 box_time = make_box(41, 1, 22, 7, font=FONT_SMALL, background_color=COLOR_BLUE_DARK)
 root_group.append(box_time)
 
+rate_offset_y = 11
+
 # Electricity Rates
-box_rate_elec_now = make_box(1, 12, 24, 7, font=FONT_SMALL, background_color=COLOR_GREEN_DARK)
+box_rate_elec_now = make_box(
+    10, rate_offset_y, 24, 11, font=FONT_NORMAL, background_color=COLOR_GREEN_DARK, text_offset=4
+)
 root_group.append(box_rate_elec_now)
+box_rate_elec_next = make_box(
+    40, rate_offset_y+4, 24, 7, font=FONT_SMALL, background_color=COLOR_GREEN_DARK
+)
+root_group.append(box_rate_elec_next)
 
-# box_rate_elec_next = make_box(16, 24, 24, 7, font=FONT_SMALL, background_color=COLOR_MAGENTA_DARK)
-# root_group.append(box_rate_elec_next)
-
+# Electricity Status
+rect_rate_elec_status = Rect(1, 25, 62, 6, fill=COLOR_RED_DARK)
+root_group.append(rect_rate_elec_status)
 
 # DRAW
 def draw(state):
     now_tuple = datetime.datetime.now().timetuple()
-    now_day_name = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][now_tuple.tm_wday]
-    box_date[1].text = f"{now_day_name} {now_tuple.tm_mday:02}/{now_tuple.tm_mon:02}"
+    now_day_name = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"][now_tuple.tm_wday]
+    now_month_name = [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+    ][now_tuple.tm_mon - 1]
+    box_date[1].text = f"{now_day_name} {now_tuple.tm_mon:02} {now_month_name}"
     box_time[1].text = f"{now_tuple.tm_hour:02}:{now_tuple.tm_min:02}"
     if "rates" in state:
-        box_rate_elec_now[1].text = f"{state['rates'][0][1]*100:,.1f}p"
-        # box_rate_elec_next[1].text = f"{state['rates'][1][1]*100:,.1f}p/kWh"
-    logger(f"Draw: state={state}")
+        rate_now, rate_next = state['rates'][0][1], state['rates'][1][1]
+        box_rate_elec_now[1].text = f"{int(rate_now*100)}p"
+        box_rate_elec_now[0].fill = rate_to_color(rate_now)
+        box_rate_elec_next[1].text = f"{int(rate_next*100)}p"
+        box_rate_elec_next[0].fill = rate_to_color(rate_next)
+        rect_rate_elec_status.fill = rate_to_color(rate_now)
+    if state["frame"] % 10 == 0:
+        logger(f"Draw: state={state}")
 
 
 # STATE
