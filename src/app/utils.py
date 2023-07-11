@@ -9,7 +9,14 @@ from displayio import Group
 from rtc import RTC
 
 
-from app.constants import DEBUG, NTP_TIMEZONE, OCTOPUS_API_URL, OCTOPUS_PRODUCT_CODE, COLORS_RAINBOW, COLOR_WHITE_DARK
+from app.constants import (
+    DEBUG,
+    NTP_TIMEZONE,
+    OCTOPUS_API_URL,
+    OCTOPUS_PRODUCT_CODE,
+    COLORS_RAINBOW,
+    COLOR_WHITE_DARK,
+)
 
 DATETIME_API = f"http://worldtimeapi.org/api/timezone/{NTP_TIMEZONE}"
 OCTOPUS_TARIFF_CODE = f"E-1R-{OCTOPUS_PRODUCT_CODE}-A"
@@ -138,6 +145,7 @@ def parse_timestamp(timestamp, is_dst=-1):
             is_dst,
         )
     )
+
 
 def build_splash_group(font, message, palette=None, padding=4):
     if palette is None:

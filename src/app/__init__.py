@@ -20,8 +20,16 @@ from app.constants import (
     MATRIX_HEIGHT,
     MATRIX_BIT_DEPTH,
     MATRIX_COLOR_ORDER,
-    COLORS_RAINBOW
+    COLORS_RAINBOW,
+    COLOR_RED_DARK,
+    COLOR_BLUE_DARK,
+    COLOR_GREEN_DARK,
+    COLOR_MAGENTA_DARK
+
+
 )
+
+from app.graphics import make_box
 
 from app.utils import (
     logger,
@@ -30,7 +38,7 @@ from app.utils import (
     set_current_time,
     get_current_and_next_agile_rates,
     color_brightness,
-    build_splash_group
+    build_splash_group,
 )
 
 # STATIC RESOURCES
@@ -90,18 +98,32 @@ set_current_time()
 
 # SCREEN
 root_group = Group()
-label_rate = CellLabel("Rate", 0x222222)
-root_group.append(label_rate)
-label_frame = CellLabel("Frame", 0x222222, x=48)
-root_group.append(label_frame)
+
+# Date
+box_date = make_box(1, 1, 42, 7, font=FONT_SMALL, background_color=COLOR_RED_DARK)
+root_group.append(box_date)
+
+# Time
+box_time = make_box(41, 1, 22, 7, font=FONT_SMALL, background_color=COLOR_BLUE_DARK)
+root_group.append(box_time)
+
+# Electricity Rates
+box_rate_elec_now = make_box(1, 12, 24, 7, font=FONT_SMALL, background_color=COLOR_GREEN_DARK)
+root_group.append(box_rate_elec_now)
+
+# box_rate_elec_next = make_box(16, 24, 24, 7, font=FONT_SMALL, background_color=COLOR_MAGENTA_DARK)
+# root_group.append(box_rate_elec_next)
 
 
 # DRAW
 def draw(state):
-    global label_frame, label_rate
-    label_frame.text = str(state["frame"])
+    now_tuple = datetime.datetime.now().timetuple()
+    now_day_name = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][now_tuple.tm_wday]
+    box_date[1].text = f"{now_day_name} {now_tuple.tm_mday:02}/{now_tuple.tm_mon:02}"
+    box_time[1].text = f"{now_tuple.tm_hour:02}:{now_tuple.tm_min:02}"
     if "rates" in state:
-        label_rate.text = f"{state['rates'][0][1]:,.02f}"
+        box_rate_elec_now[1].text = f"{state['rates'][0][1]*100:,.1f}p"
+        # box_rate_elec_next[1].text = f"{state['rates'][1][1]*100:,.1f}p/kWh"
     logger(f"Draw: state={state}")
 
 
@@ -115,16 +137,23 @@ def run():
     gc.collect()
     logger("Start Event Loop")
     display.show(root_group)
+    second = None
+    first_run = True
     while True:
         gc.collect()
+        now = datetime.datetime.now().timetuple()
+        if second != now.tm_sec:
+            second = now.tm_sec
+            if second % 60 == 0 or first_run:
+                first_run = False
+                logger(f"Minute")
+                state["rates"] = get_current_and_next_agile_rates()
         try:
             draw(state)
-            if state["frame"] % 60 == 0:
-                state["rates"] = get_current_and_next_agile_rates()
-            state["frame"] += 1
         except Exception as e:
             print("EXCEPTION", e)
-        time.sleep(1)
+        state["frame"] += 1
+        time.sleep(0.1)
 
 
 # STARTUP
