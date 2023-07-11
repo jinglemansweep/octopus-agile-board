@@ -1,10 +1,12 @@
 import board
 import gc
+import os
 import terminalio
 import time
 import adafruit_datetime as datetime
 import adafruit_esp32spi.adafruit_esp32spi_socket as socket
 import adafruit_requests as requests
+from adafruit_bitmap_font import bitmap_font
 from adafruit_display_text.label import Label
 from adafruit_lis3dh import LIS3DH_I2C
 from adafruit_matrixportal.matrix import Matrix
@@ -12,25 +14,35 @@ from adafruit_matrixportal.network import Network
 from busio import I2C
 from displayio import Group
 
-FONT = terminalio.FONT
-
 from app.constants import (
     DEBUG,
     MATRIX_WIDTH,
     MATRIX_HEIGHT,
     MATRIX_BIT_DEPTH,
     MATRIX_COLOR_ORDER,
+    COLORS_RAINBOW
 )
 
-from app.utils import logger, matrix_rotation, get_new_epochs, set_current_time, get_current_and_next_agile_rates
+from app.utils import (
+    logger,
+    matrix_rotation,
+    get_new_epochs,
+    set_current_time,
+    get_current_and_next_agile_rates,
+    color_brightness,
+    build_splash_group
+)
+
+# STATIC RESOURCES
+FONT_NORMAL = terminalio.FONT
+FONT_SMALL = bitmap_font.load_font("assets/bitocra7.bdf")
 
 gc.collect()
 
 
 # Local Classes
-
 class CellLabel(Label):
-    def __init__(self, text, color=0x222222, font=FONT, x=2, y=6):
+    def __init__(self, text, color=0x222222, font=FONT_NORMAL, x=0, y=0):
         super().__init__(x=x, y=y, text=text, color=color, font=font)
 
 
@@ -50,8 +62,7 @@ accelerometer = LIS3DH_I2C(I2C(board.SCL, board.SDA), address=0x19)
 _ = accelerometer.acceleration  # drain startup readings
 
 # SPLASH
-splash_group = Group()
-splash_group.append(Label(x=1, y=4, font=FONT, text="agileBoard", color=0x220022))
+splash_group = build_splash_group(FONT_SMALL, "jinglemansweep", COLORS_RAINBOW)
 
 # DISPLAY / FRAMEBUFFER
 logger("Configuring Display")
@@ -74,16 +85,15 @@ logger(f"Host ID: {host_id}")
 set_current_time()
 
 # API TEST
-#rates = get_current_and_next_agile_rates()
-#logger(f"Rates: {rates}")
-    
+# rates = get_current_and_next_agile_rates()
+# logger(f"Rates: {rates}")
+
 # SCREEN
 root_group = Group()
 label_rate = CellLabel("Rate", 0x222222)
 root_group.append(label_rate)
-label_frame = CellLabel("Frame", 0x222222, x=48) 
+label_frame = CellLabel("Frame", 0x222222, x=48)
 root_group.append(label_frame)
-
 
 
 # DRAW

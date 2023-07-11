@@ -6,7 +6,7 @@ declare -r dest_dir="${1:-/media/${USER}/CIRCUITPY}"
 
 source "${base_dir}/venv/bin/activate"
 
-echo "Deploying to Matrix Portal..."
+echo "Deploying to CircuitPython device..."
 echo
 echo "Source Path:    ${base_dir}"
 echo "Destination:    ${dest_dir}"
@@ -15,7 +15,7 @@ echo
 echo "Syncronising project source to destination device (${dest_dir})..."
 echo
 rsync -av --inplace "${base_dir}/src/" "${dest_dir}/"
-cp "${base_dir}/secrets.py" "${dest_dir}/"
+cp -rv "${base_dir}/assets" "${base_dir}/settings.toml" "${base_dir}/secrets.py" "${dest_dir}/"
 echo
 
 echo "DONE"

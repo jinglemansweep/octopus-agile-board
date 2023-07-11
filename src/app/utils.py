@@ -4,9 +4,12 @@ import math
 import time
 import adafruit_datetime as datetime
 import adafruit_requests as requests
+from adafruit_display_text.label import Label
+from displayio import Group
 from rtc import RTC
 
-from app.constants import DEBUG, NTP_TIMEZONE, OCTOPUS_API_URL, OCTOPUS_PRODUCT_CODE
+
+from app.constants import DEBUG, NTP_TIMEZONE, OCTOPUS_API_URL, OCTOPUS_PRODUCT_CODE, COLORS_RAINBOW, COLOR_WHITE_DARK
 
 DATETIME_API = f"http://worldtimeapi.org/api/timezone/{NTP_TIMEZONE}"
 OCTOPUS_TARIFF_CODE = f"E-1R-{OCTOPUS_PRODUCT_CODE}-A"
@@ -74,19 +77,25 @@ def set_current_time():
     except Exception as error:
         logger(f"Failed Network Time Fetch: {error}")
 
-        
+
 def get_current_and_next_agile_rates():
     now = datetime.datetime.now()
     rounded_minute = 0 if now.minute < 30 else 30
-    period_from = now.replace(minute=rounded_minute, second=0, microsecond=0, tzinfo=None)
+    period_from = now.replace(
+        minute=rounded_minute, second=0, microsecond=0, tzinfo=None
+    )
     period_to = period_from + datetime.timedelta(hours=1)
-    logger(f"Time Periods: Now={now.isoformat()} From={period_from.isoformat()} End={period_to.isoformat()}")
+    logger(
+        f"Time Periods: Now={now.isoformat()} From={period_from.isoformat()} End={period_to.isoformat()}"
+    )
     url = f"{OCTOPUS_API_URL}/v1/products/{OCTOPUS_PRODUCT_CODE}/electricity-tariffs/{OCTOPUS_TARIFF_CODE}/standard-unit-rates?period_from={period_from}&period_to={period_to}"
     resp = fetch_json(url)
     sorted_data = sorted(resp["results"], key=lambda x: x["valid_from"])
     rates = []
     for r in sorted_data:
-        dt_from = datetime.datetime.fromisoformat(r["valid_from"][:-1]) + datetime.timedelta(hours=1)
+        dt_from = datetime.datetime.fromisoformat(
+            r["valid_from"][:-1]
+        ) + datetime.timedelta(hours=1)
         rates.append((dt_from.isoformat(), r["value_inc_vat"] / 100))
     return rates
 
@@ -129,6 +138,36 @@ def parse_timestamp(timestamp, is_dst=-1):
             is_dst,
         )
     )
+
+def build_splash_group(font, message, palette=None, padding=4):
+    if palette is None:
+        palette = [COLOR_WHITE_DARK]
+    group = Group()
+    ci = 0
+    x = 1
+    while ci < len(message):
+        group.append(
+            Label(
+                x=x,
+                y=4,
+                font=font,
+                text=message[ci],
+                color=palette[ci % len(palette)],
+            )
+        )
+        ci += 1
+        x += padding
+    return group
+
+
+def color_brightness(color, brightness):
+    r = (color >> 16) & 0xFF
+    g = (color >> 8) & 0xFF
+    b = color & 0xFF
+    r = int(max(0, r * brightness))
+    g = int(max(0, g * brightness))
+    b = int(max(0, b * brightness))
+    return (r << 16) | (g << 8) | b
 
 
 def rgb_dict_to_hex(color, brightness=255):
