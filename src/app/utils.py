@@ -72,6 +72,7 @@ def get_timer_mode(now_tuple):
 
 def fetch_json(requests, url):
     response = requests.get(url)
+    gc.collect()
     return json.loads(response.text)
 
 

@@ -22,13 +22,13 @@ from app.constants import (
 )
 
 
-def rate_to_color(rate):
+def rate_to_color(rate, default=COLOR_MAGENTA_DARK):
     if (rate * 100) < OCTOPUS_RATE_LOW:
         return COLOR_GREEN_DARK
     elif (rate * 100) > OCTOPUS_RATE_HIGH:
         return COLOR_RED_DARK
     else:
-        return COLOR_BLUE_DARK
+        return default
 
 
 def make_box(

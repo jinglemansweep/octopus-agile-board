@@ -18,19 +18,26 @@ from app.constants import (
     MATRIX_BIT_DEPTH,
     MATRIX_COLOR_ORDER,
     OCTOPUS_UPDATE_MINS,
-    NTP_UPDATE_MINS,
+    NTP_UPDATE_HOURS,
     MQTT_BROKER,
     MQTT_PORT,
     MQTT_USERNAME,
     MQTT_PASSWORD,
     MQTT_TOPIC_PREFIX,
     COLORS_RAINBOW,
+    COLOR_RED,
     COLOR_RED_DARK,
+    COLOR_BLUE,
     COLOR_BLUE_DARK,
+    COLOR_CYAN,
     COLOR_CYAN_DARK,
+    COLOR_GREEN,
     COLOR_GREEN_DARK,
+    COLOR_MAGENTA,
     COLOR_MAGENTA_DARK,
+    COLOR_YELLOW,
     COLOR_YELLOW_DARK,
+    COLOR_WHITE,
     COLOR_WHITE_DARK,
 )
 from app.graphics import CellLabel, make_box, rate_to_color
@@ -107,6 +114,9 @@ gc.collect()
 root_group = Group()
 blank_group = Group()
 
+# THEME
+COLOR_DIMMED = COLOR_MAGENTA_DARK
+
 # SPRITE: BORDER
 border_pos = (0, 0)
 border_size = (MATRIX_WIDTH, MATRIX_HEIGHT)
@@ -117,7 +127,7 @@ border_rect = RoundRect(
     border_size[0],
     border_size[1],
     r=1,
-    outline=COLOR_BLUE_DARK,
+    outline=None,
     stroke=border_stroke,
 )
 root_group.append(border_rect)
@@ -129,7 +139,7 @@ date_label = Label(
     y=date_pos[1],
     font=FONT,
     text="... ../..",
-    color=COLOR_BLUE_DARK,
+    color=COLOR_DIMMED,
 )
 root_group.append(date_label)
 
@@ -140,51 +150,49 @@ time_label = Label(
     y=time_pos[1],
     font=FONT,
     text="..:..",
-    color=COLOR_BLUE_DARK,
+    color=COLOR_DIMMED,
 )
 root_group.append(time_label)
 
 # SPRITE: RATE NOW
-ratenow_pos = (8, 12)
-ratenow_size = (20, 11)
+ratenow_pos = (7, 11)
+ratenow_size = (21, 11)
 ratenow_rect = RoundRect(
     ratenow_pos[0],
     ratenow_pos[1],
     ratenow_size[0],
     ratenow_size[1],
     r=1,
-    outline=COLOR_BLUE_DARK,
-    stroke=2,
+    outline=COLOR_DIMMED,
 )
 root_group.append(ratenow_rect)
 ratenow_label = Label(
-    x=ratenow_pos[0] + 4,
+    x=ratenow_pos[0] + 3,
     y=ratenow_pos[1] + 5,
     font=FONT,
     text=".",
-    color=COLOR_BLUE_DARK,
+    color=COLOR_DIMMED,
 )
 root_group.append(ratenow_label)
 
 # SPRITE: RATE NEXT
-ratenext_pos = (36, 12)
-ratenext_size = (20, 11)
+ratenext_pos = (35, 11)
+ratenext_size = (21, 11)
 ratenext_rect = RoundRect(
     ratenext_pos[0],
     ratenext_pos[1],
     ratenext_size[0],
     ratenext_size[1],
     r=1,
-    outline=COLOR_BLUE_DARK,
-    stroke=2,
+    outline=COLOR_DIMMED,
 )
 root_group.append(ratenext_rect)
 ratenext_label = Label(
-    x=ratenext_pos[0] + 4,
+    x=ratenext_pos[0] + 3,
     y=ratenext_pos[1] + 5,
     font=FONT,
     text=".",
-    color=COLOR_BLUE_DARK,
+    color=COLOR_DIMMED,
 )
 root_group.append(ratenext_label)
 
@@ -195,7 +203,7 @@ memfree_label = Label(
     y=memfree_pos[1],
     font=FONT,
     text="",
-    color=COLOR_BLUE_DARK,
+    color=COLOR_DIMMED,
 )
 if DEBUG:
     root_group.append(memfree_label)
@@ -217,68 +225,61 @@ def draw(frame, now, state):
         ratenext_color = rate_to_color(ratenext_value)
 
         border_rect.outline = (
-            ratenow_color if state["timer_mode"] == "awake" else COLOR_BLUE_DARK
+            ratenow_color if state["timer_mode"] == "awake" else None
         )
         border_rect.stroke = 2 if state["timer_mode"] == "awake" else 1
 
         date_label.color = (
-            COLOR_MAGENTA_DARK if state["timer_mode"] == "awake" else COLOR_BLUE_DARK
+            COLOR_MAGENTA_DARK if state["timer_mode"] == "awake" else COLOR_DIMMED
         )
 
         time_label.color = COLOR_YELLOW_DARK
 
         ratenow_rect.outline = ratenow_color
-        ratenow_rect.stroke = 2 if state["timer_mode"] == "awake" else 1
-        ratenow_label.text = f"{int(ratenow_value*100)}P"
+        ratenow_label.text = f"{ratenow_value*100:.1f}"
         ratenow_label.color = COLOR_WHITE_DARK
 
-        ratenext_label.text = f"{int(ratenext_value*100)}P"
+        ratenext_label.text = f"{ratenext_value*100:.1f}"
         ratenext_label.color = (
             COLOR_WHITE_DARK if state["timer_mode"] == "awake" else COLOR_CYAN_DARK
         )
         ratenext_rect.outline = (
-            ratenext_color if state["timer_mode"] == "awake" else COLOR_BLUE_DARK
+            ratenext_color if state["timer_mode"] == "awake" else COLOR_DIMMED
         )
-        ratenext_rect.stroke = 2 if state["timer_mode"] == "awake" else 1
 
 
 # STATE
 frame = 0
 state = dict()
 
-
 # APP LOGIC
-def run():
-    global frame, state
-    logger("Start Event Loop")
-    initialised = False
-    ts = time.monotonic()
 
-    while True:
-        now = datetime.datetime.now().timetuple()
-        ts, (new_hour, new_min, new_sec) = get_new_epochs(ts)
+logger("Start Event Loop")
+initialised = False
+ts = time.monotonic()
 
-        if new_min or not initialised:
-            logger(f"Debug: Frame={frame} State={state}")
-            state["timer_mode"] = get_timer_mode(now)
-            state["timer_mode"] = "awake" # get_timer_mode(now)
-            if now.tm_min % NTP_UPDATE_MINS == 0 or not initialised:
-                logger(f"NTP: Fetch Time")
-                set_current_time(requests)
-            if now.tm_min % OCTOPUS_UPDATE_MINS == 0 or not initialised:
-                state["rates"] = get_current_and_next_agile_rates(requests)
-                logger(f"Fetch: Rates={state['rates']}")
-                initialised = True
-            display.show(root_group if state["timer_mode"] != "sleep" else blank_group)
-            try:
-                draw(frame, now, state)
-            except Exception as e:
-                print("EXCEPTION", e)
+while True:
+    now = datetime.datetime.now().timetuple()
+    ts, (new_hour, new_min, new_sec) = get_new_epochs(ts)
 
-        frame += 1
-        time.sleep(1)
-        gc.collect()
+    if (new_hour and now.tm_hour % NTP_UPDATE_HOURS == 0) or not initialised:
+        logger(f"NTP: Fetch Time")
+        set_current_time(requests)
 
+    if new_min or not initialised:
+        logger(f"Debug: Frame={frame} State={state}")
+        state["timer_mode"] = get_timer_mode(now)
+        # state["timer_mode"] = "awake"
+        if now.tm_min % OCTOPUS_UPDATE_MINS == 0 or not initialised:
+            state["rates"] = get_current_and_next_agile_rates(requests)
+            logger(f"Fetch: Rates={state['rates']}")
+            initialised = True
+        display.show(root_group if state["timer_mode"] != "sleep" else blank_group)
+        try:
+            draw(frame, now, state)
+        except Exception as e:
+            print("EXCEPTION", e)
 
-# STARTUP
-run()
+    frame += 1
+    time.sleep(1)
+    gc.collect()

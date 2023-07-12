@@ -9,7 +9,7 @@ MATRIX_HEIGHT = secrets.get("matrix_height", 32)
 MATRIX_BIT_DEPTH = secrets.get("matrix_bit_depth", 3)
 MATRIX_COLOR_ORDER = secrets.get("matrix_color_order", "RGB")
 
-NTP_UPDATE_MINS = int(secrets.get("ntp_update_mins", 5))
+NTP_UPDATE_HOURS = int(secrets.get("ntp_update_hours", 3))
 
 TIMER_WAKE = secrets.get("timer_wake", 9)
 TIMER_DARK = secrets.get("timer_dark", 18)
