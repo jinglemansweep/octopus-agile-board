@@ -3,7 +3,6 @@ import json
 import math
 import time
 import adafruit_datetime as datetime
-import adafruit_requests as requests
 from adafruit_display_text.label import Label
 from displayio import Group
 from rtc import RTC
@@ -55,27 +54,15 @@ def matrix_rotation(accelerometer):
     ) * 90
 
 
-def fetch_json(url, retry_count=3):
-    failures = 0
-    response = None
-    logger(f"JSON Fetch: URL={url} Retries={retry_count}")
-    while not response:
-        try:
-            response = requests.get(url)
-            failures = 0
-        except AssertionError as error:
-            logger(f"JSON Fetch Retry: {error}")
-            failures += 1
-            if failures >= retry_count:
-                raise AssertionError("JSON Fetch Error") from error
-            continue
+def fetch_json(requests, url):
+    response = requests.get(url)
     return json.loads(response.text)
 
 
-def set_current_time():
+def set_current_time(requests):
     logger("Setting Time from Network")
     try:
-        resp = fetch_json(DATETIME_API)
+        resp = fetch_json(requests, DATETIME_API)
         timestamp = resp["datetime"]
         logger(f"Time: {timestamp}")
         timetuple = parse_timestamp(resp["datetime"])
@@ -85,7 +72,7 @@ def set_current_time():
         logger(f"Failed Network Time Fetch: {error}")
 
 
-def get_current_and_next_agile_rates():
+def get_current_and_next_agile_rates(requests):
     now = datetime.datetime.now()
     rounded_minute = 0 if now.minute < 30 else 30
     period_from = now.replace(
@@ -96,7 +83,7 @@ def get_current_and_next_agile_rates():
         f"Time Periods: Now={now.isoformat()} From={period_from.isoformat()} End={period_to.isoformat()}"
     )
     url = f"{OCTOPUS_API_URL}/v1/products/{OCTOPUS_PRODUCT_CODE}/electricity-tariffs/{OCTOPUS_TARIFF_CODE}/standard-unit-rates?period_from={period_from}&period_to={period_to}"
-    resp = fetch_json(url)
+    resp = fetch_json(requests, url)
     sorted_data = sorted(resp["results"], key=lambda x: x["valid_from"])
     rates = []
     for r in sorted_data:
@@ -105,8 +92,6 @@ def get_current_and_next_agile_rates():
         ) + datetime.timedelta(hours=1)
         rates.append((dt_from.isoformat(), r["value_inc_vat"] / 100))
     return rates
-
-
 
 
 def get_new_epochs(ts_last=None):
@@ -127,6 +112,41 @@ def get_new_epochs(ts_last=None):
                 logger(f"epoch: hour")
     # logger(f"epochs: hour={epochs[0]} min={epochs[1]} sec={epochs[2]}")
     return (ts_last, epochs)
+
+
+def build_date_fmt(now_tuple):
+    day_name = convert_day_name(now_tuple.tm_wday)
+    month_name = convert_month_name(now_tuple.tm_mon)
+    return f"{day_name} {now_tuple.tm_mon:02} {month_name}"
+
+def build_time_fmt(now_tuple):
+    return f"{now_tuple.tm_hour:02}:{now_tuple.tm_min:02}"
+
+WEEKDAY_NAMES = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"]
+
+
+def convert_day_name(weekday):
+    return WEEKDAY_NAMES[weekday]
+
+
+MONTH_NAMES = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+]
+
+
+def convert_month_name(month):
+    return MONTH_NAMES[month - 1]
 
 
 def parse_timestamp(timestamp, is_dst=-1):

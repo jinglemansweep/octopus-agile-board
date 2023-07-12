@@ -1,11 +1,9 @@
 import gc
 
-gc.collect()
 print("BOOT [mem:{}]".format(gc.mem_free()))
 
-import displayio
+from displayio import release_displays
 
-displayio.release_displays()
-gc.collect()
+release_displays()
 
 import app
