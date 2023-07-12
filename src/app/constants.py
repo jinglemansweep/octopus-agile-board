@@ -1,4 +1,5 @@
 import os
+from secrets import secrets
 
 # CONFIG / SECRETS
 DEBUG = os.getenv("DEBUG", False)
@@ -11,6 +12,12 @@ MATRIX_WIDTH = os.getenv("MATRIX_WIDTH", 64)
 MATRIX_HEIGHT = os.getenv("MATRIX_HEIGHT", 32)
 MATRIX_BIT_DEPTH = os.getenv("MATRIX_BIT_DEPTH", 3)
 MATRIX_COLOR_ORDER = os.getenv("MATRIX_COLOR_ORDER", "RGB")
+
+MQTT_BROKER = secrets.get("mqtt_broker", "homeassistant.local")
+MQTT_PORT = secrets.get("mqtt_port", 1883)
+MQTT_USERNAME = secrets.get("mqtt_username")
+MQTT_PASSWORD = secrets.get("mqtt_password")
+MQTT_TOPIC_PREFIX = secrets.get("mqtt_topic_prefix", "agileboard")
 
 # CONSTANTS
 COLOR_WHITE = 0xFFFFFF

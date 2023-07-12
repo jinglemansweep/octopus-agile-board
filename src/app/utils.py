@@ -1,8 +1,10 @@
+import asyncio
 import gc
 import json
 import math
 import time
 import adafruit_datetime as datetime
+import adafruit_minimqtt.adafruit_minimqtt as MQTT
 from adafruit_display_text.label import Label
 from displayio import Group
 from rtc import RTC
@@ -173,3 +175,34 @@ def color_brightness(color, brightness):
     g = int(max(0, g * brightness))
     b = int(max(0, b * brightness))
     return (r << 16) | (g << 8) | b
+
+def mqtt_connect(socket, network, broker, on_message_cb, port=1883, username=None, password=None):
+    MQTT.set_socket(socket, network._wifi.esp)
+    client = MQTT.MQTT(
+        broker=broker,
+        port=port,
+        username=username,
+        password=password
+    )
+    client.on_connect = on_mqtt_connect
+    client.on_disconnect = on_mqtt_disconnect
+    client.on_message = on_message_cb
+    client.connect()
+    return client
+
+async def mqtt_poll(client, timeout=0.1):
+    while True:
+        try:    
+            client.loop(timeout=timeout)
+         
+        except Exception as error:
+            # logger(f"mqtt poll error: error={error}")
+            pass
+        gc.collect()
+        await asyncio.sleep(timeout)
+
+def on_mqtt_connect(client, userdata, flags, rc):
+    logger("MQTT: Connected: flags={} rc={}".format(flags, rc))
+
+def on_mqtt_disconnect(client, userdata, rc):
+    logger("MQTT: Disconnected: Reconnecting")
