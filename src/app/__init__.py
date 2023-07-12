@@ -18,6 +18,7 @@ from app.constants import (
     MATRIX_BIT_DEPTH,
     MATRIX_COLOR_ORDER,
     OCTOPUS_UPDATE_MINS,
+    NTP_UPDATE_MINS,
     MQTT_BROKER,
     MQTT_PORT,
     MQTT_USERNAME,
@@ -104,6 +105,7 @@ gc.collect()
 
 # SCREEN
 root_group = Group()
+blank_group = Group()
 
 # SPRITE: BORDER
 border_pos = (0, 0)
@@ -127,7 +129,7 @@ date_label = Label(
     y=date_pos[1],
     font=FONT,
     text="... ../..",
-    color=COLOR_MAGENTA_DARK,
+    color=COLOR_BLUE_DARK,
 )
 root_group.append(date_label)
 
@@ -138,7 +140,7 @@ time_label = Label(
     y=time_pos[1],
     font=FONT,
     text="..:..",
-    color=COLOR_YELLOW_DARK,
+    color=COLOR_BLUE_DARK,
 )
 root_group.append(time_label)
 
@@ -159,8 +161,8 @@ ratenow_label = Label(
     x=ratenow_pos[0] + 4,
     y=ratenow_pos[1] + 5,
     font=FONT,
-    text="?",
-    color=COLOR_WHITE_DARK,
+    text=".",
+    color=COLOR_BLUE_DARK,
 )
 root_group.append(ratenow_label)
 
@@ -181,8 +183,8 @@ ratenext_label = Label(
     x=ratenext_pos[0] + 4,
     y=ratenext_pos[1] + 5,
     font=FONT,
-    text="?",
-    color=COLOR_WHITE_DARK,
+    text=".",
+    color=COLOR_BLUE_DARK,
 )
 root_group.append(ratenext_label)
 
@@ -193,7 +195,7 @@ memfree_label = Label(
     y=memfree_pos[1],
     font=FONT,
     text="",
-    color=COLOR_RED_DARK,
+    color=COLOR_BLUE_DARK,
 )
 if DEBUG:
     root_group.append(memfree_label)
@@ -219,9 +221,16 @@ def draw(frame, now, state):
         )
         border_rect.stroke = 2 if state["timer_mode"] == "awake" else 1
 
+        date_label.color = (
+            COLOR_MAGENTA_DARK if state["timer_mode"] == "awake" else COLOR_BLUE_DARK
+        )
+
+        time_label.color = COLOR_YELLOW_DARK
+
         ratenow_rect.outline = ratenow_color
         ratenow_rect.stroke = 2 if state["timer_mode"] == "awake" else 1
         ratenow_label.text = f"{int(ratenow_value*100)}P"
+        ratenow_label.color = COLOR_WHITE_DARK
 
         ratenext_label.text = f"{int(ratenext_value*100)}P"
         ratenext_label.color = (
@@ -248,13 +257,18 @@ def run():
     while True:
         now = datetime.datetime.now().timetuple()
         ts, (new_hour, new_min, new_sec) = get_new_epochs(ts)
+
         if new_min or not initialised:
             logger(f"Debug: Frame={frame} State={state}")
             state["timer_mode"] = get_timer_mode(now)
+            if now.tm_min % NTP_UPDATE_MINS == 0 or not initialised:
+                logger(f"NTP: Fetch Time")
+                set_current_time(requests)
             if now.tm_min % OCTOPUS_UPDATE_MINS == 0 or not initialised:
                 state["rates"] = get_current_and_next_agile_rates(requests)
                 logger(f"Fetch: Rates={state['rates']}")
                 initialised = True
+            display.show(root_group if state["timer_mode"] != "sleep" else blank_group)
             try:
                 draw(frame, now, state)
             except Exception as e:

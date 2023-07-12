@@ -9,8 +9,10 @@ MATRIX_HEIGHT = secrets.get("matrix_height", 32)
 MATRIX_BIT_DEPTH = secrets.get("matrix_bit_depth", 3)
 MATRIX_COLOR_ORDER = secrets.get("matrix_color_order", "RGB")
 
+NTP_UPDATE_MINS = int(secrets.get("ntp_update_mins", 5))
+
 TIMER_WAKE = secrets.get("timer_wake", 9)
-TIMER_DARK = secrets.get("timer_dark", 19)
+TIMER_DARK = secrets.get("timer_dark", 18)
 TIMER_SLEEP = secrets.get("timer_sleep", 22)
 
 OCTOPUS_API_URL = secrets.get("octopus_api_url", "https://api.octopus.energy")
