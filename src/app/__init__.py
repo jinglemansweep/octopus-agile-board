@@ -143,7 +143,7 @@ root_group.append(time_label)
 
 # SPRITE: RATE NOW
 ratenow_pos = (8, 13)
-ratenow_size = (20, 12)
+ratenow_size = (20, 11)
 ratenow_rect = RoundRect(
     ratenow_pos[0],
     ratenow_pos[1],
@@ -165,7 +165,7 @@ root_group.append(ratenow_label)
 
 # SPRITE: RATE NEXT
 ratenext_pos = (36, 13)
-ratenext_size = (20, 12)
+ratenext_size = (20, 11)
 ratenext_rect = RoundRect(
     ratenext_pos[0],
     ratenext_pos[1],
