@@ -26,6 +26,7 @@ from app.constants import (
     COLORS_RAINBOW,
     COLOR_RED_DARK,
     COLOR_BLUE_DARK,
+    COLOR_CYAN_DARK,
     COLOR_GREEN_DARK,
     COLOR_MAGENTA_DARK,
     COLOR_YELLOW_DARK,
@@ -224,7 +225,7 @@ def draw(frame, now, state):
 
         ratenext_label.text = f"{int(ratenext_value*100)}P"
         ratenext_label.color = (
-            COLOR_WHITE_DARK if state["timer_mode"] == "awake" else COLOR_BLUE_DARK
+            COLOR_WHITE_DARK if state["timer_mode"] == "awake" else COLOR_CYAN_DARK
         )
         ratenext_rect.outline = (
             ratenext_color if state["timer_mode"] == "awake" else COLOR_BLUE_DARK
