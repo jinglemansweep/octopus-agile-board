@@ -105,7 +105,7 @@ root_group = Group()
 # SPRITE: BORDER
 border_pos = (0, 0)
 border_size = (MATRIX_WIDTH, MATRIX_HEIGHT)
-border_width = 2
+border_stroke = 2
 border_rect = RoundRect(
     border_pos[0],
     border_pos[1],
@@ -113,7 +113,7 @@ border_rect = RoundRect(
     border_size[1],
     r=1,
     outline=COLOR_BLUE_DARK,
-    stroke=border_width,
+    stroke=border_stroke,
 )
 root_group.append(border_rect)
 
@@ -140,10 +140,21 @@ time_label = Label(
 root_group.append(time_label)
 
 # SPRITE: RATE NOW
-ratenow_pos = (8, 14)
+ratenow_pos = (8, 10)
+ratenow_size = (20, 12)
+ratenow_rect = RoundRect(
+    ratenow_pos[0],
+    ratenow_pos[1],
+    ratenow_size[0],
+    ratenow_size[1],
+    r=1,
+    outline=COLOR_BLUE_DARK,
+    stroke=2,
+)
+root_group.append(ratenow_rect)
 ratenow_label = Label(
-    x=ratenow_pos[0],
-    y=ratenow_pos[1],
+    x=ratenow_pos[0] + 4,
+    y=ratenow_pos[1] + 5,
     font=FONT,
     text="?",
     color=COLOR_WHITE_DARK,
@@ -151,10 +162,21 @@ ratenow_label = Label(
 root_group.append(ratenow_label)
 
 # SPRITE: RATE NEXT
-ratenext_pos = (45, 14)
+ratenext_pos = (36, 10)
+ratenext_size = (20, 12)
+ratenext_rect = RoundRect(
+    ratenext_pos[0],
+    ratenext_pos[1],
+    ratenext_size[0],
+    ratenext_size[1],
+    r=1,
+    outline=COLOR_BLUE_DARK,
+    stroke=2,
+)
+root_group.append(ratenext_rect)
 ratenext_label = Label(
-    x=ratenext_pos[0],
-    y=ratenext_pos[1],
+    x=ratenext_pos[0] + 4,
+    y=ratenext_pos[1] + 5,
     font=FONT,
     text="?",
     color=COLOR_WHITE_DARK,
@@ -173,7 +195,7 @@ memfree_label = Label(
 root_group.append(memfree_label)
 
 # SPRITE: DEBUG (TIMER MODE)
-timermode_pos = (32, 26)
+timermode_pos = (42, 26)
 timermode_label = Label(
     x=timermode_pos[0],
     y=timermode_pos[1],
@@ -196,9 +218,13 @@ def draw(frame, now, state):
     timermode_label.text = state["timer_mode"]
 
     if "rates" in state:
-        rate_now, rate_next = state["rates"][0][1], state["rates"][1][1]
-        ratenow_label.text = f"{int(rate_now*100)}p"
-        ratenext_label.text = f"{int(rate_next*100)}p"
+        ratenow_value, ratenext_value = state["rates"][0][1], state["rates"][1][1]
+        ratenow_color = rate_to_color(ratenow_value)
+        ratenext_color = rate_to_color(ratenext_value)
+        ratenow_rect.outline = ratenow_color
+        ratenow_label.text = f"{int(ratenow_value*100)}p"
+        ratenow_rect.outline = ratenext_color
+        ratenext_label.text = f"{int(ratenext_value*100)}p"
         border_rect.outline = rate_to_color(rate_now)
 
 # STATE
