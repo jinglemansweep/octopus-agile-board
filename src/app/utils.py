@@ -15,6 +15,7 @@ from app.constants import (
     OCTOPUS_PRODUCT_CODE,
     COLORS_RAINBOW,
     COLOR_WHITE_DARK,
+    WEEKDAY_NAMES,
 )
 
 DATETIME_API = f"http://worldtimeapi.org/api/timezone/{NTP_TIMEZONE}"
@@ -102,51 +103,25 @@ def get_new_epochs(ts_last=None):
     epochs = [None, None, None]  # h, m, s
     if ts_last is None or ts > ts_last + 1:
         epochs[2] = True
-        # logger(f"epoch: second")
         ts_last = ts
         if now.tm_sec == 0:
             epochs[1] = True
-            logger(f"epoch: minute")
             if now.tm_min == 0:
                 epochs[0] = True
-                logger(f"epoch: hour")
-    # logger(f"epochs: hour={epochs[0]} min={epochs[1]} sec={epochs[2]}")
     return (ts_last, epochs)
 
 
 def build_date_fmt(now_tuple):
     day_name = convert_day_name(now_tuple.tm_wday)
-    month_name = convert_month_name(now_tuple.tm_mon)
-    return f"{day_name} {now_tuple.tm_mon:02} {month_name}"
+    return f"{day_name} {now_tuple.tm_mday:02}/{now_tuple.tm_mon:02}"
+
 
 def build_time_fmt(now_tuple):
     return f"{now_tuple.tm_hour:02}:{now_tuple.tm_min:02}"
 
-WEEKDAY_NAMES = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"]
-
 
 def convert_day_name(weekday):
     return WEEKDAY_NAMES[weekday]
-
-
-MONTH_NAMES = [
-    "Jan",
-    "Feb",
-    "Mar",
-    "Apr",
-    "May",
-    "Jun",
-    "Jul",
-    "Aug",
-    "Sep",
-    "Oct",
-    "Nov",
-    "Dec",
-]
-
-
-def convert_month_name(month):
-    return MONTH_NAMES[month - 1]
 
 
 def parse_timestamp(timestamp, is_dst=-1):
@@ -198,14 +173,3 @@ def color_brightness(color, brightness):
     g = int(max(0, g * brightness))
     b = int(max(0, b * brightness))
     return (r << 16) | (g << 8) | b
-
-
-def rgb_dict_to_hex(color, brightness=255):
-    r = int(color["r"] * (brightness / 255))
-    g = int(color["g"] * (brightness / 255))
-    b = int(color["b"] * (brightness / 255))
-    return rgb2hex(r, g, b)
-
-
-def rgb2hex(r, g, b):
-    return (r << 16) + (g << 8) + b

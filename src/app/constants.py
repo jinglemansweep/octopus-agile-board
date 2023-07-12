@@ -42,3 +42,5 @@ COLORS_RAINBOW = [
     COLOR_MAGENTA_DARK,
     COLOR_MAGENTA,
 ]
+
+WEEKDAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
