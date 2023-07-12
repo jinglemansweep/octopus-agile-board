@@ -145,7 +145,7 @@ time_label = Label(
 root_group.append(time_label)
 
 # SPRITE: RATE NOW
-ratenow_pos = (8, 13)
+ratenow_pos = (8, 12)
 ratenow_size = (20, 11)
 ratenow_rect = RoundRect(
     ratenow_pos[0],
@@ -167,7 +167,7 @@ ratenow_label = Label(
 root_group.append(ratenow_label)
 
 # SPRITE: RATE NEXT
-ratenext_pos = (36, 13)
+ratenext_pos = (36, 12)
 ratenext_size = (20, 11)
 ratenext_rect = RoundRect(
     ratenext_pos[0],
@@ -261,6 +261,7 @@ def run():
         if new_min or not initialised:
             logger(f"Debug: Frame={frame} State={state}")
             state["timer_mode"] = get_timer_mode(now)
+            state["timer_mode"] = "awake" # get_timer_mode(now)
             if now.tm_min % NTP_UPDATE_MINS == 0 or not initialised:
                 logger(f"NTP: Fetch Time")
                 set_current_time(requests)
