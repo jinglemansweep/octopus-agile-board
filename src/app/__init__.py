@@ -139,7 +139,7 @@ date_label = Label(
     y=date_pos[1],
     font=FONT,
     text="... ../..",
-    color=COLOR_DIMMED,
+    color=None,
 )
 root_group.append(date_label)
 
@@ -233,7 +233,8 @@ def draw(frame, now, state):
             COLOR_MAGENTA_DARK if state["timer_mode"] == "awake" else COLOR_DIMMED
         )
 
-        time_label.color = COLOR_YELLOW_DARK
+        date_label.color = COLOR_YELLOW_DARK if state["timer_mode"] == "awake" else None
+        time_label.color = COLOR_WHITE_DARK
 
         ratenow_rect.outline = ratenow_color
         ratenow_label.text = f"{ratenow_value*100:.1f}"
