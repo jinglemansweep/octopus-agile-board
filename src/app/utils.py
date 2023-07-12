@@ -60,14 +60,15 @@ def matrix_rotation(accelerometer):
 
 
 def get_timer_mode(now_tuple):
-    if TIMER_FORCE in ["awake", "dark", "sleep"]:
+    hour = now_tuple.tm_hour
+    if TIMER_FORCE in ("on", "off", "dark"):
         return TIMER_FORCE
-    if TIMER_WAKE <= now_tuple.tm_hour < TIMER_DARK:
-        return "awake"
-    elif TIMER_DARK <= now_tuple.tm_hour < TIMER_SLEEP:
+    if TIMER_WAKE <= hour < TIMER_DARK:
+        return "on"
+    elif TIMER_DARK <= hour < TIMER_SLEEP:
         return "dark"
-    elif now_tuple.tm_hour >= TIMER_SLEEP:
-        return "sleep"
+    else:
+        return "off"
 
 
 def fetch_json(requests, url):

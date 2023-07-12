@@ -13,8 +13,8 @@ NTP_UPDATE_HOURS = int(secrets.get("ntp_update_hours", 3))
 
 TIMER_FORCE = secrets.get("timer_force")
 TIMER_WAKE = secrets.get("timer_wake", 9)
-TIMER_DARK = secrets.get("timer_dark", 18)
-TIMER_SLEEP = secrets.get("timer_sleep", 22)
+TIMER_DARK = secrets.get("timer_dark", 21)
+TIMER_SLEEP = secrets.get("timer_sleep", 23)
 
 OCTOPUS_API_URL = secrets.get("octopus_api_url", "https://api.octopus.energy")
 OCTOPUS_PRODUCT_CODE = secrets.get("octopus_product_code", "AGILE-FLEX-22-11-25")

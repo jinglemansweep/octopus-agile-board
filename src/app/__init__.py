@@ -18,6 +18,10 @@ from app.constants import (
     MATRIX_BIT_DEPTH,
     MATRIX_COLOR_ORDER,
     OCTOPUS_UPDATE_MINS,
+    TIMER_WAKE,
+    TIMER_DARK,
+    TIMER_SLEEP,
+    TIMER_FORCE,
     NTP_UPDATE_HOURS,
     MQTT_BROKER,
     MQTT_PORT,
@@ -106,37 +110,37 @@ COLOR_DIMMED = COLOR_MAGENTA_DARK
 # SPRITE: BORDER
 border_pos = (0, 0)
 border_size = (MATRIX_WIDTH, MATRIX_HEIGHT)
-border_stroke = 2
+border_stroke = 1
 border_rect = RoundRect(
     border_pos[0],
     border_pos[1],
     border_size[0],
     border_size[1],
     r=1,
-    outline=None,
+    outline=COLOR_DIMMED,
     stroke=border_stroke,
 )
 root_group.append(border_rect)
 
 # SPRITE: DATE
-date_pos = (3, 5)
+date_pos = (3, 4)
 date_label = Label(
     x=date_pos[0],
     y=date_pos[1],
     font=FONT,
     text="... ../..",
-    color=None,
+    color=COLOR_DIMMED,
 )
 root_group.append(date_label)
 
 # SPRITE: TIME
-time_pos = (42, 5)
+time_pos = (42, 4)
 time_label = Label(
     x=time_pos[0],
     y=time_pos[1],
     font=FONT,
     text="..:..",
-    color=None,
+    color=COLOR_DIMMED,
 )
 root_group.append(time_label)
 
@@ -149,7 +153,7 @@ ratenow_rect = RoundRect(
     ratenow_size[0],
     ratenow_size[1],
     r=1,
-    outline=None,
+    outline=COLOR_DIMMED,
 )
 root_group.append(ratenow_rect)
 ratenow_label = Label(
@@ -157,7 +161,7 @@ ratenow_label = Label(
     y=ratenow_pos[1] + 5,
     font=FONT,
     text=".",
-    color=None,
+    color=COLOR_DIMMED,
 )
 root_group.append(ratenow_label)
 
@@ -170,7 +174,7 @@ ratenext_rect = RoundRect(
     ratenext_size[0],
     ratenext_size[1],
     r=1,
-    outline=None,
+    outline=COLOR_DIMMED,
 )
 root_group.append(ratenext_rect)
 ratenext_label = Label(
@@ -178,7 +182,7 @@ ratenext_label = Label(
     y=ratenext_pos[1] + 5,
     font=FONT,
     text=".",
-    color=None,
+    color=COLOR_DIMMED,
 )
 root_group.append(ratenext_label)
 
@@ -207,45 +211,44 @@ def draw(frame, now, state):
 
     if "rates" in state:
         ratenow_value, ratenext_value = state["rates"][0][1], state["rates"][1][1]
-        ratenow_color = rate_to_color(ratenow_value)
-        ratenext_color = rate_to_color(ratenext_value)
 
         border_rect.outline = (
-            ratenow_color if state["timer_mode"] == "awake" else None
-        )
-        border_rect.stroke = 2 if state["timer_mode"] == "awake" else 1
-
-        date_label.color = (
-            COLOR_MAGENTA_DARK if state["timer_mode"] == "awake" else COLOR_DIMMED
+            rate_to_color(ratenow_value) if state["timer_mode"] == "on" else None
         )
 
-        date_label.color = COLOR_YELLOW_DARK if state["timer_mode"] == "awake" else None
+        date_label.color = COLOR_YELLOW_DARK if state["timer_mode"] == "on" else None
+
         time_label.color = COLOR_WHITE_DARK
+        time_label.x = time_pos[0] if state["timer_mode"] == "on" else 3
+        time_label.y = time_pos[1] if state["timer_mode"] == "on" else 26
 
-        ratenow_rect.outline = ratenow_color if state["timer_mode"] == "awake" else None
-        ratenow_label.x = 7 if state["timer_mode"] == "awake" else 4
-        ratenow_label.y = 11 if state["timer_mode"] == "awake" else 28
+        ratenow_rect.outline = (
+            rate_to_color(ratenow_value, COLOR_DIMMED) if state["timer_mode"] == "on" else None
+        )
+        ratenow_label.x = ratenow_pos[0] + 3 if state["timer_mode"] == "on" else 3
+        ratenow_label.y = ratenow_pos[1] + 5 if state["timer_mode"] == "on" else 26
         ratenow_label.text = f"{ratenow_value*100:.1f}"
-        ratenow_label.color = COLOR_WHITE_DARK if state["timer_mode"] == "awake" else COLOR_MAGENTA_DARK
+        ratenow_label.color = (
+            COLOR_WHITE_DARK if state["timer_mode"] == "on" else COLOR_MAGENTA_DARK
+        )
 
         ratenext_label.text = f"{ratenext_value*100:.1f}"
-        ratenext_label.color = (
-            COLOR_WHITE_DARK if state["timer_mode"] == "awake" else None
-        )
+        ratenext_label.color = COLOR_WHITE_DARK if state["timer_mode"] == "on" else None
         ratenext_rect.outline = (
-            ratenext_color if state["timer_mode"] == "awake" else None
+            rate_to_color(ratenext_value, COLOR_DIMMED) if state["timer_mode"] == "on" else None
         )
 
 
 # STATE
 frame = 0
-state = dict()
+state = {}
 
 # APP LOGIC
 
 logger("Start Event Loop")
 initialised = False
 ts = time.monotonic()
+
 
 while True:
     now = datetime.datetime.now().timetuple()
@@ -259,12 +262,14 @@ while True:
     if new_min or not initialised:
         logger(f"Debug: Frame={frame} State={state}")
         state["timer_mode"] = get_timer_mode(now)
-        # state["timer_mode"] = "awake"
+
         if now.tm_min % OCTOPUS_UPDATE_MINS == 0 or not initialised:
             state["rates"] = get_current_and_next_agile_rates(requests)
+            gc.collect()
             logger(f"Fetch: Rates={state['rates']}")
             initialised = True
-        display.show(root_group if state["timer_mode"] != "sleep" else blank_group)
+
+        display.show(root_group if state["timer_mode"] != "off" else blank_group)
         try:
             draw(frame, now, state)
         except Exception as e:

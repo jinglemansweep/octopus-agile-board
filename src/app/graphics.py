@@ -22,7 +22,7 @@ from app.constants import (
 )
 
 
-def rate_to_color(rate, default=COLOR_MAGENTA_DARK):
+def rate_to_color(rate, default=None):
     if (rate * 100) < OCTOPUS_RATE_LOW:
         return COLOR_GREEN_DARK
     elif (rate * 100) > OCTOPUS_RATE_HIGH:
