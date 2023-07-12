@@ -7,12 +7,13 @@ adafruit_requests==2.0.0
 adafruit_ticks==1.0.11
 neopixel==6.3.9
 simpleio==3.0.11
+adafruit_ntp==3.0.9
 adafruit_bitmap_font==2.0.1
-adafruit_display_shapes==2.6.2
-adafruit_display_text==2.28.3
 adafruit_bus_device==5.2.6
+adafruit_display_text==2.28.3
 adafruit_esp32spi==6.0.0
 adafruit_io==5.7.1
 adafruit_matrixportal==3.1.0
-adafruit_minimqtt==7.4.0
+# adafruit_minimqtt==7.4.0
 adafruit_portalbase==1.14.8
+adafruit_display_shapes==2.6.2

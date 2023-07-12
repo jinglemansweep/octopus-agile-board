@@ -1,17 +1,19 @@
-import os
+
 from secrets import secrets
 
 # CONFIG / SECRETS
-DEBUG = os.getenv("DEBUG", False)
-NTP_TIMEZONE = os.getenv("TIMEZONE", "Europe/London")
+DEBUG = secrets.get("debug", False)
+NTP_TIMEZONE = secrets.get("timezone", "Europe/London")
 
-OCTOPUS_API_URL = os.getenv("OCTOPUS_API_URL", "https://api.octopus.energy")
-OCTOPUS_PRODUCT_CODE = os.getenv("OCTOPUS_PRODUCT_CODE", "AGILE-FLEX-22-11-25")
+MATRIX_WIDTH = secrets.get("matrix_width", 64)
+MATRIX_HEIGHT = secrets.get("matrix_height", 32)
+MATRIX_BIT_DEPTH = secrets.get("matrix_bit_depth", 3)
+MATRIX_COLOR_ORDER = secrets.get("matrix_color_order", "RGB")
 
-MATRIX_WIDTH = os.getenv("MATRIX_WIDTH", 64)
-MATRIX_HEIGHT = os.getenv("MATRIX_HEIGHT", 32)
-MATRIX_BIT_DEPTH = os.getenv("MATRIX_BIT_DEPTH", 3)
-MATRIX_COLOR_ORDER = os.getenv("MATRIX_COLOR_ORDER", "RGB")
+OCTOPUS_API_URL = secrets.get("octopus_api_url", "https://api.octopus.energy")
+OCTOPUS_PRODUCT_CODE = secrets.get("octopus_product_code", "AGILE-FLEX-22-11-25")
+OCTOPUS_RATE_LOW = int(secrets.get("octopus_rate_low", 10))
+OCTOPUS_RATE_HIGH = int(secrets.get("octopus_rate_high", 30))
 
 MQTT_BROKER = secrets.get("mqtt_broker", "homeassistant.local")
 MQTT_PORT = secrets.get("mqtt_port", 1883)

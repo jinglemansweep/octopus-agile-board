@@ -1,4 +1,3 @@
-import asyncio
 import gc
 import json
 import math
@@ -190,15 +189,14 @@ def mqtt_connect(socket, network, broker, on_message_cb, port=1883, username=Non
     client.connect()
     return client
 
-async def mqtt_poll(client, timeout=0.1):
+async def mqtt_poll(client, timeout=1):
     while True:
+        logger(f"MQTT POLL")
         try:    
             client.loop(timeout=timeout)
-         
         except Exception as error:
             # logger(f"mqtt poll error: error={error}")
             pass
-        gc.collect()
         await asyncio.sleep(timeout)
 
 def on_mqtt_connect(client, userdata, flags, rc):

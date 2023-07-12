@@ -17,6 +17,8 @@ from app.constants import (
     COLOR_YELLOW_DARK,
     COLOR_CYAN,
     COLOR_CYAN_DARK,
+    OCTOPUS_RATE_LOW,
+    OCTOPUS_RATE_HIGH
 )
 
 

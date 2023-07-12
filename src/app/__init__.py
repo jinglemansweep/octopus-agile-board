@@ -1,4 +1,3 @@
-import asyncio
 import board
 import gc
 import os
@@ -214,21 +213,22 @@ state = dict()
 
 
 # APP LOGIC
-async def run():
+def run():
     global mqtt, frame, state
     logger("Start Event Loop")
     initialised = False
     ts = time.monotonic()
-    asyncio.create_task(mqtt_poll(mqtt))
 
     while True:
         now = datetime.datetime.now().timetuple()
         ts, (new_hour, new_min, new_sec) = get_new_epochs(ts)
-        if (new_min and now.tm_min % 15 == 0) or not initialised:
+        print(new_hour, new_min, new_sec)
+        if (new_min and now.tm_min % 2 == 0) or not initialised:
+            logger(f"new_min={new_min} now.tm_min%2={now.tm_min % 2} initialised={initialised}")
             state["rates"] = get_current_and_next_agile_rates(requests)
             logger(f"Fetch: Rates={state['rates']}")
             initialised = True
-        state = handle_messages(state)            
+        # state = handle_messages(state)            
         try:
             draw(frame, now, state)
         except Exception as e:
@@ -237,17 +237,9 @@ async def run():
             logger(f"Debug: Frame={frame} State={state}")
 
         frame += 1
-        await asyncio.sleep(0.1)
+        time.sleep(1)
         gc.collect()
 
 
 # STARTUP
-while True:
-    try:
-        asyncio.run(run())
-    except Exception as e:
-        print("EXCEPTION", e)
-    finally:
-        logger(f"asyncio restarting")
-        time.sleep(1)
-        asyncio.new_event_loop()
+run()
