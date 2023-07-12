@@ -17,6 +17,7 @@ from app.constants import (
     MATRIX_HEIGHT,
     MATRIX_BIT_DEPTH,
     MATRIX_COLOR_ORDER,
+    OCTOPUS_UPDATE_MINS,
     MQTT_BROKER,
     MQTT_PORT,
     MQTT_USERNAME,
@@ -40,8 +41,7 @@ from app.utils import (
     build_splash_group,
     build_date_fmt,
     build_time_fmt,
-    mqtt_connect,
-    mqtt_poll
+    get_timer_mode
 )
 
 from secrets import secrets
@@ -81,9 +81,9 @@ gc.collect()
 FONT = bitmap_font.load_font("assets/bitocra7.bdf")
 gc.collect()
 
-# SPLASH - DO NOT ENABLE - USES FAR TO MUCH RAM
-#splash_group = build_splash_group(FONT, "jinglemansweep", COLORS_RAINBOW)
-#display.show(splash_group)
+# SPLASH - KEEP SIMPLE, USES RAM
+splash_group = Group() # build_splash_group(FONT, "jinglemansweep", COLORS_RAINBOW)
+display.show(splash_group)
 
 # NETWORKING
 logger("Configuring Networking")
@@ -94,17 +94,6 @@ mac = network._wifi.esp.MAC_address
 host_id = "{:02x}{:02x}{:02x}{:02x}".format(mac[0], mac[1], mac[2], mac[3])
 requests = network.requests
 logger(f"Host ID: {host_id}")
-
-# MQTT
-logger("Configuring MQTT")
-MQTT_MESSAGES = []
-def on_mqtt_message(client, topic, message):
-    MQTT_MESSAGES.append((topic, message))
-    logger(f"MQTT: Message: Topic={topic} Message={message}")
-mqtt = mqtt_connect(socket, network, MQTT_BROKER, on_mqtt_message, MQTT_PORT, MQTT_USERNAME, MQTT_PASSWORD)
-mqtt.subscribe(f"{MQTT_TOPIC_PREFIX}/#")
-mqtt.publish(f"{MQTT_TOPIC_PREFIX}/alive", "OK") # IMPORTANT
-gc.collect()
 
 # TIME
 set_current_time(requests)
@@ -134,7 +123,7 @@ date_label = Label(
     x=date_pos[0],
     y=date_pos[1],
     font=FONT,
-    text="DD/MM",
+    text="... ../..",
     color=COLOR_WHITE_DARK,
 )
 root_group.append(date_label)
@@ -145,22 +134,10 @@ time_label = Label(
     x=time_pos[0],
     y=time_pos[1],
     font=FONT,
-    text="HH:MM",
+    text="..:..",
     color=COLOR_YELLOW_DARK,
 )
 root_group.append(time_label)
-
-# SPRITE: DEBUG (FREE MEMORY)
-# Mem Free
-memfree_pos = (3, 26)
-memfree_label = Label(
-    x=memfree_pos[0],
-    y=memfree_pos[1],
-    font=FONT,
-    text="0",
-    color=COLOR_MAGENTA_DARK,
-)
-root_group.append(memfree_label)
 
 # SPRITE: RATE NOW
 ratenow_pos = (8, 14)
@@ -168,7 +145,7 @@ ratenow_label = Label(
     x=ratenow_pos[0],
     y=ratenow_pos[1],
     font=FONT,
-    text="0",
+    text="?",
     color=COLOR_WHITE_DARK,
 )
 root_group.append(ratenow_label)
@@ -179,11 +156,34 @@ ratenext_label = Label(
     x=ratenext_pos[0],
     y=ratenext_pos[1],
     font=FONT,
-    text="0",
+    text="?",
     color=COLOR_WHITE_DARK,
 )
 root_group.append(ratenext_label)
 
+# SPRITE: DEBUG (FREE MEMORY)
+memfree_pos = (3, 26)
+memfree_label = Label(
+    x=memfree_pos[0],
+    y=memfree_pos[1],
+    font=FONT,
+    text="",
+    color=COLOR_MAGENTA_DARK,
+)
+root_group.append(memfree_label)
+
+# SPRITE: DEBUG (TIMER MODE)
+timermode_pos = (32, 26)
+timermode_label = Label(
+    x=timermode_pos[0],
+    y=timermode_pos[1],
+    font=FONT,
+    text="",
+    color=COLOR_GREEN_DARK,
+)
+root_group.append(timermode_label)
+
+gc.collect()
 display.show(root_group)
 #del splash_group
 gc.collect()
@@ -193,19 +193,13 @@ def draw(frame, now, state):
     date_label.text = build_date_fmt(now)
     time_label.text = build_time_fmt(now)
     memfree_label.text = str(gc.mem_free())
+    timermode_label.text = state["timer_mode"]
+
     if "rates" in state:
         rate_now, rate_next = state["rates"][0][1], state["rates"][1][1]
         ratenow_label.text = f"{int(rate_now*100)}p"
         ratenext_label.text = f"{int(rate_next*100)}p"
         border_rect.outline = rate_to_color(rate_now)
-
-# EVENTS
-def handle_messages(state):
-    global MQTT_MESSAGES
-    while len(MQTT_MESSAGES) > 0:
-        msg = MQTT_MESSAGES.pop(0)
-        print(msg)
-    return state
 
 # STATE
 frame = 0
@@ -214,17 +208,16 @@ state = dict()
 
 # APP LOGIC
 def run():
-    global mqtt, frame, state
+    global frame, state
     logger("Start Event Loop")
     initialised = False
     ts = time.monotonic()
 
     while True:
         now = datetime.datetime.now().timetuple()
+        state["timer_mode"] = get_timer_mode(now)
         ts, (new_hour, new_min, new_sec) = get_new_epochs(ts)
-        print(new_hour, new_min, new_sec)
-        if (new_min and now.tm_min % 2 == 0) or not initialised:
-            logger(f"new_min={new_min} now.tm_min%2={now.tm_min % 2} initialised={initialised}")
+        if (new_min and now.tm_min % OCTOPUS_UPDATE_MINS == 0) or not initialised:
             state["rates"] = get_current_and_next_agile_rates(requests)
             logger(f"Fetch: Rates={state['rates']}")
             initialised = True

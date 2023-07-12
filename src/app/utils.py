@@ -8,7 +8,6 @@ from adafruit_display_text.label import Label
 from displayio import Group
 from rtc import RTC
 
-
 from app.constants import (
     DEBUG,
     NTP_TIMEZONE,
@@ -17,6 +16,9 @@ from app.constants import (
     COLORS_RAINBOW,
     COLOR_WHITE_DARK,
     WEEKDAY_NAMES,
+    TIMER_WAKE,
+    TIMER_DARK,
+    TIMER_SLEEP
 )
 
 DATETIME_API = f"http://worldtimeapi.org/api/timezone/{NTP_TIMEZONE}"
@@ -54,6 +56,15 @@ def matrix_rotation(accelerometer):
         )
         % 4
     ) * 90
+
+def get_timer_mode(now_tuple):
+    if now_tuple.tm_hour >= TIMER_WAKE:
+        return "awake"
+    elif now_tuple.tm_hour > TIMER_DARK:
+        return "dark"
+    elif now_tuple.tm_hour > TIMER_SLEEP:
+        return "sleep"
+
 
 
 def fetch_json(requests, url):
