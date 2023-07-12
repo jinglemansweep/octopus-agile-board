@@ -41,7 +41,7 @@ from app.utils import (
     build_splash_group,
     build_date_fmt,
     build_time_fmt,
-    get_timer_mode
+    get_timer_mode,
 )
 
 from secrets import secrets
@@ -55,6 +55,7 @@ gc.collect()
 # RGB MATRIX
 logger("Configuring RGB Matrix")
 from adafruit_matrixportal.matrix import Matrix
+
 matrix = Matrix(
     width=MATRIX_WIDTH,
     height=MATRIX_HEIGHT,
@@ -66,6 +67,7 @@ gc.collect()
 # ACCELEROMETER
 from busio import I2C
 from adafruit_lis3dh import LIS3DH_I2C
+
 accelerometer = LIS3DH_I2C(I2C(board.SCL, board.SDA), address=0x19)
 _ = accelerometer.acceleration  # drain startup readings
 gc.collect()
@@ -82,7 +84,7 @@ FONT = bitmap_font.load_font("assets/bitocra7.bdf")
 gc.collect()
 
 # SPLASH - KEEP SIMPLE, USES RAM
-splash_group = Group() # build_splash_group(FONT, "jinglemansweep", COLORS_RAINBOW)
+splash_group = Group()  # build_splash_group(FONT, "jinglemansweep", COLORS_RAINBOW)
 display.show(splash_group)
 
 # NETWORKING
@@ -124,7 +126,7 @@ date_label = Label(
     y=date_pos[1],
     font=FONT,
     text="... ../..",
-    color=COLOR_WHITE_DARK,
+    color=COLOR_MAGENTA_DARK,
 )
 root_group.append(date_label)
 
@@ -140,7 +142,7 @@ time_label = Label(
 root_group.append(time_label)
 
 # SPRITE: RATE NOW
-ratenow_pos = (8, 10)
+ratenow_pos = (8, 13)
 ratenow_size = (20, 12)
 ratenow_rect = RoundRect(
     ratenow_pos[0],
@@ -162,7 +164,7 @@ ratenow_label = Label(
 root_group.append(ratenow_label)
 
 # SPRITE: RATE NEXT
-ratenext_pos = (36, 10)
+ratenext_pos = (36, 13)
 ratenext_size = (20, 12)
 ratenext_rect = RoundRect(
     ratenext_pos[0],
@@ -190,24 +192,14 @@ memfree_label = Label(
     y=memfree_pos[1],
     font=FONT,
     text="",
-    color=COLOR_MAGENTA_DARK,
+    color=COLOR_RED_DARK,
 )
-root_group.append(memfree_label)
-
-# SPRITE: DEBUG (TIMER MODE)
-timermode_pos = (42, 26)
-timermode_label = Label(
-    x=timermode_pos[0],
-    y=timermode_pos[1],
-    font=FONT,
-    text="",
-    color=COLOR_GREEN_DARK,
-)
-root_group.append(timermode_label)
+if DEBUG:
+    root_group.append(memfree_label)
 
 gc.collect()
 display.show(root_group)
-#del splash_group
+# del splash_group
 gc.collect()
 
 # DRAW
@@ -215,19 +207,30 @@ def draw(frame, now, state):
     date_label.text = build_date_fmt(now)
     time_label.text = build_time_fmt(now)
     memfree_label.text = str(gc.mem_free())
-    timermode_label.text = state["timer_mode"]
 
     if "rates" in state:
         ratenow_value, ratenext_value = state["rates"][0][1], state["rates"][1][1]
         ratenow_color = rate_to_color(ratenow_value)
         ratenext_color = rate_to_color(ratenext_value)
-        
-        border_rect.outline = ratenow_color
+
+        border_rect.outline = (
+            ratenow_color if state["timer_mode"] == "awake" else COLOR_BLUE_DARK
+        )
+        border_rect.stroke = 2 if state["timer_mode"] == "awake" else 1
+
         ratenow_rect.outline = ratenow_color
-        ratenow_label.text = f"{int(ratenow_value*100)}p"
-        ratenow_rect.outline = ratenext_color
-        ratenext_label.text = f"{int(ratenext_value*100)}p"
-        
+        ratenow_rect.stroke = 2 if state["timer_mode"] == "awake" else 1
+        ratenow_label.text = f"{int(ratenow_value*100)}P"
+
+        ratenext_label.text = f"{int(ratenext_value*100)}P"
+        ratenext_label.color = (
+            COLOR_WHITE_DARK if state["timer_mode"] == "awake" else COLOR_BLUE_DARK
+        )
+        ratenext_rect.outline = (
+            ratenext_color if state["timer_mode"] == "awake" else COLOR_BLUE_DARK
+        )
+        ratenext_rect.stroke = 2 if state["timer_mode"] == "awake" else 1
+
 
 # STATE
 frame = 0
@@ -243,19 +246,18 @@ def run():
 
     while True:
         now = datetime.datetime.now().timetuple()
-        state["timer_mode"] = get_timer_mode(now)
         ts, (new_hour, new_min, new_sec) = get_new_epochs(ts)
-        if (new_min and now.tm_min % OCTOPUS_UPDATE_MINS == 0) or not initialised:
-            state["rates"] = get_current_and_next_agile_rates(requests)
-            logger(f"Fetch: Rates={state['rates']}")
-            initialised = True
-        # state = handle_messages(state)            
-        try:
-            draw(frame, now, state)
-        except Exception as e:
-            print("EXCEPTION", e)
-        if new_min:
+        if new_min or not initialised:
             logger(f"Debug: Frame={frame} State={state}")
+            state["timer_mode"] = get_timer_mode(now)
+            if now.tm_min % OCTOPUS_UPDATE_MINS == 0 or not initialised:
+                state["rates"] = get_current_and_next_agile_rates(requests)
+                logger(f"Fetch: Rates={state['rates']}")
+                initialised = True
+            try:
+                draw(frame, now, state)
+            except Exception as e:
+                print("EXCEPTION", e)
 
         frame += 1
         time.sleep(1)

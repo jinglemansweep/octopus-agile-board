@@ -18,23 +18,17 @@ from app.constants import (
     COLOR_CYAN,
     COLOR_CYAN_DARK,
     OCTOPUS_RATE_LOW,
-    OCTOPUS_RATE_HIGH
+    OCTOPUS_RATE_HIGH,
 )
 
 
 def rate_to_color(rate):
-    if rate < 0.0:
-        return COLOR_WHITE_DARK
-    elif rate < 0.05:
-        return COLOR_CYAN_DARK
-    elif rate < 0.1:
-        return COLOR_BLUE_DARK
-    elif rate < 0.15:
+    if (rate * 100) < OCTOPUS_RATE_LOW:
         return COLOR_GREEN_DARK
-    elif rate < 0.30:
-        return COLOR_YELLOW_DARK
-    else:
+    elif (rate * 100) > OCTOPUS_RATE_HIGH:
         return COLOR_RED_DARK
+    else:
+        return COLOR_BLUE_DARK
 
 
 def make_box(

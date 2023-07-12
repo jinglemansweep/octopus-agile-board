@@ -18,7 +18,7 @@ from app.constants import (
     WEEKDAY_NAMES,
     TIMER_WAKE,
     TIMER_DARK,
-    TIMER_SLEEP
+    TIMER_SLEEP,
 )
 
 DATETIME_API = f"http://worldtimeapi.org/api/timezone/{NTP_TIMEZONE}"
@@ -57,14 +57,17 @@ def matrix_rotation(accelerometer):
         % 4
     ) * 90
 
-def get_timer_mode(now_tuple):
-    if now_tuple.tm_hour >= TIMER_WAKE:
-        return "awake"
-    elif now_tuple.tm_hour > TIMER_DARK:
-        return "dark"
-    elif now_tuple.tm_hour > TIMER_SLEEP:
-        return "sleep"
 
+def get_timer_mode(now_tuple):
+    logger(
+        f"get_timer_mode hour={now_tuple.tm_hour} wake={TIMER_WAKE} dark={TIMER_DARK} sleep={TIMER_SLEEP}"
+    )
+    if TIMER_WAKE <= now_tuple.tm_hour < TIMER_DARK:
+        return "awake"
+    elif TIMER_DARK <= now_tuple.tm_hour < TIMER_SLEEP:
+        return "dark"
+    elif now_tuple.tm_hour >= TIMER_SLEEP:
+        return "sleep"
 
 
 def fetch_json(requests, url):
@@ -186,32 +189,33 @@ def color_brightness(color, brightness):
     b = int(max(0, b * brightness))
     return (r << 16) | (g << 8) | b
 
-def mqtt_connect(socket, network, broker, on_message_cb, port=1883, username=None, password=None):
+
+def mqtt_connect(
+    socket, network, broker, on_message_cb, port=1883, username=None, password=None
+):
     MQTT.set_socket(socket, network._wifi.esp)
-    client = MQTT.MQTT(
-        broker=broker,
-        port=port,
-        username=username,
-        password=password
-    )
+    client = MQTT.MQTT(broker=broker, port=port, username=username, password=password)
     client.on_connect = on_mqtt_connect
     client.on_disconnect = on_mqtt_disconnect
     client.on_message = on_message_cb
     client.connect()
     return client
 
+
 async def mqtt_poll(client, timeout=1):
     while True:
         logger(f"MQTT POLL")
-        try:    
+        try:
             client.loop(timeout=timeout)
         except Exception as error:
             # logger(f"mqtt poll error: error={error}")
             pass
         await asyncio.sleep(timeout)
 
+
 def on_mqtt_connect(client, userdata, flags, rc):
     logger("MQTT: Connected: flags={} rc={}".format(flags, rc))
+
 
 def on_mqtt_disconnect(client, userdata, rc):
     logger("MQTT: Disconnected: Reconnecting")

@@ -1,4 +1,3 @@
-
 from secrets import secrets
 
 # CONFIG / SECRETS
