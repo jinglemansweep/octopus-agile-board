@@ -11,6 +11,7 @@ MATRIX_COLOR_ORDER = secrets.get("matrix_color_order", "RGB")
 
 NTP_UPDATE_HOURS = int(secrets.get("ntp_update_hours", 3))
 
+TIMER_FORCE = secrets.get("timer_force")
 TIMER_WAKE = secrets.get("timer_wake", 9)
 TIMER_DARK = secrets.get("timer_dark", 18)
 TIMER_SLEEP = secrets.get("timer_sleep", 22)

@@ -71,21 +71,7 @@ matrix = Matrix(
     bit_depth=MATRIX_BIT_DEPTH,
     color_order=MATRIX_COLOR_ORDER,
 )
-gc.collect()
-
-# ACCELEROMETER
-from busio import I2C
-from adafruit_lis3dh import LIS3DH_I2C
-
-accelerometer = LIS3DH_I2C(I2C(board.SCL, board.SDA), address=0x19)
-_ = accelerometer.acceleration  # drain startup readings
-gc.collect()
-
-# DISPLAY / FRAMEBUFFER
-logger("Configuring Display")
 display = matrix.display
-display.rotation = matrix_rotation(accelerometer)
-del accelerometer
 gc.collect()
 
 # STATIC RESOURCES
@@ -150,7 +136,7 @@ time_label = Label(
     y=time_pos[1],
     font=FONT,
     text="..:..",
-    color=COLOR_DIMMED,
+    color=None,
 )
 root_group.append(time_label)
 
@@ -163,7 +149,7 @@ ratenow_rect = RoundRect(
     ratenow_size[0],
     ratenow_size[1],
     r=1,
-    outline=COLOR_DIMMED,
+    outline=None,
 )
 root_group.append(ratenow_rect)
 ratenow_label = Label(
@@ -171,7 +157,7 @@ ratenow_label = Label(
     y=ratenow_pos[1] + 5,
     font=FONT,
     text=".",
-    color=COLOR_DIMMED,
+    color=None,
 )
 root_group.append(ratenow_label)
 
@@ -184,7 +170,7 @@ ratenext_rect = RoundRect(
     ratenext_size[0],
     ratenext_size[1],
     r=1,
-    outline=COLOR_DIMMED,
+    outline=None,
 )
 root_group.append(ratenext_rect)
 ratenext_label = Label(
@@ -192,7 +178,7 @@ ratenext_label = Label(
     y=ratenext_pos[1] + 5,
     font=FONT,
     text=".",
-    color=COLOR_DIMMED,
+    color=None,
 )
 root_group.append(ratenext_label)
 
@@ -236,16 +222,18 @@ def draw(frame, now, state):
         date_label.color = COLOR_YELLOW_DARK if state["timer_mode"] == "awake" else None
         time_label.color = COLOR_WHITE_DARK
 
-        ratenow_rect.outline = ratenow_color
+        ratenow_rect.outline = ratenow_color if state["timer_mode"] == "awake" else None
+        ratenow_label.x = 7 if state["timer_mode"] == "awake" else 4
+        ratenow_label.y = 11 if state["timer_mode"] == "awake" else 28
         ratenow_label.text = f"{ratenow_value*100:.1f}"
-        ratenow_label.color = COLOR_WHITE_DARK
+        ratenow_label.color = COLOR_WHITE_DARK if state["timer_mode"] == "awake" else COLOR_MAGENTA_DARK
 
         ratenext_label.text = f"{ratenext_value*100:.1f}"
         ratenext_label.color = (
-            COLOR_WHITE_DARK if state["timer_mode"] == "awake" else COLOR_CYAN_DARK
+            COLOR_WHITE_DARK if state["timer_mode"] == "awake" else None
         )
         ratenext_rect.outline = (
-            ratenext_color if state["timer_mode"] == "awake" else COLOR_DIMMED
+            ratenext_color if state["timer_mode"] == "awake" else None
         )
 
 
@@ -266,6 +254,7 @@ while True:
     if (new_hour and now.tm_hour % NTP_UPDATE_HOURS == 0) or not initialised:
         logger(f"NTP: Fetch Time")
         set_current_time(requests)
+        gc.collect()
 
     if new_min or not initialised:
         logger(f"Debug: Frame={frame} State={state}")

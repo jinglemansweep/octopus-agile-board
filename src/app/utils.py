@@ -16,6 +16,7 @@ from app.constants import (
     COLORS_RAINBOW,
     COLOR_WHITE_DARK,
     WEEKDAY_NAMES,
+    TIMER_FORCE,
     TIMER_WAKE,
     TIMER_DARK,
     TIMER_SLEEP,
@@ -59,9 +60,8 @@ def matrix_rotation(accelerometer):
 
 
 def get_timer_mode(now_tuple):
-    logger(
-        f"get_timer_mode hour={now_tuple.tm_hour} wake={TIMER_WAKE} dark={TIMER_DARK} sleep={TIMER_SLEEP}"
-    )
+    if TIMER_FORCE in ["awake", "dark", "sleep"]:
+        return TIMER_FORCE
     if TIMER_WAKE <= now_tuple.tm_hour < TIMER_DARK:
         return "awake"
     elif TIMER_DARK <= now_tuple.tm_hour < TIMER_SLEEP:
