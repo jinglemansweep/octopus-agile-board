@@ -221,11 +221,13 @@ def draw(frame, now, state):
         ratenow_value, ratenext_value = state["rates"][0][1], state["rates"][1][1]
         ratenow_color = rate_to_color(ratenow_value)
         ratenext_color = rate_to_color(ratenext_value)
+        
+        border_rect.outline = ratenow_color
         ratenow_rect.outline = ratenow_color
         ratenow_label.text = f"{int(ratenow_value*100)}p"
         ratenow_rect.outline = ratenext_color
         ratenext_label.text = f"{int(ratenext_value*100)}p"
-        border_rect.outline = rate_to_color(rate_now)
+        
 
 # STATE
 frame = 0
