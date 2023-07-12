@@ -219,8 +219,8 @@ def draw(frame, now, state):
         date_label.color = COLOR_YELLOW_DARK if state["timer_mode"] == "on" else None
 
         time_label.color = COLOR_WHITE_DARK
-        time_label.x = time_pos[0] if state["timer_mode"] == "on" else 3
-        time_label.y = time_pos[1] if state["timer_mode"] == "on" else 26
+        time_label.x = time_pos[0] if state["timer_mode"] == "on" else 26
+        time_label.y = time_pos[1] if state["timer_mode"] == "on" else 3
 
         ratenow_rect.outline = (
             rate_to_color(ratenow_value, COLOR_DIMMED) if state["timer_mode"] == "on" else None
