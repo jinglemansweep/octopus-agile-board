@@ -13,8 +13,8 @@ from app.constants import (
     NTP_TIMEZONE,
     OCTOPUS_API_URL,
     OCTOPUS_PRODUCT_CODE,
-    COLORS_RAINBOW,
-    COLOR_WHITE_DARK,
+    OCTOPUS_RATE_LOW,
+    OCTOPUS_RATE_HIGH,
     WEEKDAY_NAMES,
     TIMER_FORCE,
     TIMER_WAKE,
@@ -112,7 +112,7 @@ def get_current_and_next_agile_rates(
         dt_from = datetime.datetime.fromisoformat(
             r["valid_from"][:-1]
         ) + datetime.timedelta(hours=1)
-        rates.append((dt_from.isoformat(), r["value_inc_vat"] / 100))
+        rates.append((dt_from.isoformat(), r["value_inc_vat"]))
     return rates
 
 
@@ -121,7 +121,9 @@ def find_lowest_contiguous_period(prices, periods):
         return None  # Not enough data to find X hours
     min_period_start = 0
     min_period_end = periods - 1
-    min_period_sum = sum([price for _, price in prices[min_period_start:min_period_end + 1]])
+    min_period_sum = sum(
+        [price for _, price in prices[min_period_start : min_period_end + 1]]
+    )
     current_sum = min_period_sum
     for i in range(periods, len(prices)):
         current_sum += prices[i][1] - prices[i - periods][1]
@@ -180,25 +182,13 @@ def parse_timestamp(timestamp, is_dst=-1):
     )
 
 
-def build_splash_group(font, message, palette=None, padding=4):
-    if palette is None:
-        palette = [COLOR_WHITE_DARK]
-    group = Group()
-    ci = 0
-    x = 1
-    while ci < len(message):
-        group.append(
-            Label(
-                x=x,
-                y=4,
-                font=font,
-                text=message[ci],
-                color=palette[ci % len(palette)],
-            )
-        )
-        ci += 1
-        x += padding
-    return group
+def rate_to_color(rate, low_color, high_color, default_color):
+    if (rate * 100) < OCTOPUS_RATE_LOW:
+        return low_color
+    elif (rate * 100) > OCTOPUS_RATE_HIGH:
+        return high_color
+    else:
+        return default_color
 
 
 def color_brightness(color, brightness):

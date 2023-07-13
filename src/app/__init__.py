@@ -19,36 +19,14 @@ from app.constants import (
     MATRIX_HEIGHT,
     MATRIX_BIT_DEPTH,
     MATRIX_COLOR_ORDER,
+    NTP_UPDATE_HOURS,
     OCTOPUS_UPDATE_HOURS,
     OCTOPUS_FETCH_PERIODS,
-    TIMER_WAKE,
-    TIMER_DARK,
-    TIMER_SLEEP,
     TIMER_FORCE,
-    NTP_UPDATE_HOURS,
-    MQTT_BROKER,
-    MQTT_PORT,
-    MQTT_USERNAME,
-    MQTT_PASSWORD,
     MQTT_TOPIC_PREFIX,
-    COLORS_RAINBOW,
-    COLOR_RED,
-    COLOR_RED_DARK,
-    COLOR_BLUE,
-    COLOR_BLUE_DARK,
-    COLOR_CYAN,
-    COLOR_CYAN_DARK,
-    COLOR_GREEN,
-    COLOR_GREEN_DARK,
-    COLOR_MAGENTA,
-    COLOR_MAGENTA_DARK,
-    COLOR_YELLOW,
-    COLOR_YELLOW_DARK,
-    COLOR_WHITE,
-    COLOR_WHITE_DARK,
-    COLOR_BLACK,
+    Colors
 )
-from app.graphics import CellLabel, make_box, rate_to_color
+
 from app.utils import (
     logger,
     matrix_rotation,
@@ -56,11 +34,11 @@ from app.utils import (
     set_current_time,
     get_current_and_next_agile_rates,
     find_lowest_contiguous_period,
-    build_splash_group,
     build_date_fmt,
     build_time_fmt,
     build_dow_fmt,
     get_timer_mode,
+    rate_to_color,
 )
 
 from secrets import secrets
@@ -111,7 +89,7 @@ root_group = Group()
 blank_group = Group()
 
 # THEME
-COLOR_DIMMED = COLOR_BLUE_DARK
+COLOR_DIMMED = Colors.BLUE_DARK
 
 # SPRITE: BORDER
 border_pos = (0, 0)
@@ -135,7 +113,7 @@ dow_label = Label(
     y=dow_pos[1],
     font=FONT,
     text="...",
-    color=COLOR_MAGENTA_DARK,
+    color=Colors.MAGENTA_DARK,
 )
 root_group.append(dow_label)
 
@@ -146,7 +124,7 @@ date_label = Label(
     y=date_pos[1],
     font=FONT,
     text="../..",
-    color=COLOR_MAGENTA_DARK,
+    color=Colors.MAGENTA_DARK,
 )
 root_group.append(date_label)
 
@@ -157,7 +135,7 @@ time_label = Label(
     y=time_pos[1],
     font=FONT,
     text="..:..",
-    color=COLOR_WHITE_DARK,
+    color=Colors.WHITE_DARK,
 )
 root_group.append(time_label)
 
@@ -178,7 +156,7 @@ ratenow_label = Label(
     y=ratenow_pos[1] + 5,
     font=FONT,
     text=".",
-    color=COLOR_WHITE_DARK,
+    color=Colors.YELLOW_DARK,
 )
 root_group.append(ratenow_label)
 
@@ -199,7 +177,7 @@ ratenext_label = Label(
     y=ratenext_pos[1] + 5,
     font=FONT,
     text=".",
-    color=COLOR_WHITE_DARK,
+    color=Colors.YELLOW_DARK,
 )
 root_group.append(ratenext_label)
 
@@ -215,7 +193,7 @@ cheaprate_label = Label(
 root_group.append(cheaprate_label)
 
 # SPRITE: DEBUG (FREE MEMORY)
-debug_pos = (40, 27)
+debug_pos = (32, 27)
 debug_label = Label(
     x=debug_pos[0],
     y=debug_pos[1],
@@ -233,8 +211,7 @@ gc.collect()
 
 # DRAW
 def draw(frame, now, state):
-    display.brightness = 1.0 if state["mode"] == "on" else 0.0
-    
+
     dow_label.text = build_dow_fmt(now)
     date_label.text = build_date_fmt(now)
 
@@ -242,27 +219,57 @@ def draw(frame, now, state):
     time_label.x = time_pos[0] if state["mode"] == "on" else 45
     time_label.y = time_pos[1] if state["mode"] == "on" else 2
 
-    debug_label.text = f"{gc.mem_free()}"
+    debug_label.text = f"{gc.mem_free()} {state['mode']}"
 
     if "rates" in state:
+
+        # need to convert current time to 30 min period, plus the next period, and use as lookup in "rates" object
+        # e.g. [("2023-07-14-T22:00:00", 0.245), ("2023-07-14-T22:30:00", 0.245)]
+
         ratenow_value, ratenext_value = state["rates"][0][1], state["rates"][1][1]
 
-        border_rect.outline = rate_to_color(ratenow_value)
+        border_rect.outline = (
+            rate_to_color(ratenow_value, Colors.GREEN_DARK, Colors.RED_DARK, None)
+            if state["mode"] == "on"
+            else None
+        )
 
-        ratenow_rect.outline = rate_to_color(ratenow_value, COLOR_DIMMED)
+        ratenow_rect.outline = (
+            rate_to_color(ratenow_value, Colors.GREEN_DARK, Colors.RED_DARK, None)
+            if state["mode"] == "on"
+            else None
+        )
+        ratenow_label.text = f"{int(round(ratenow_value))}"
+        ratenow_label.color = rate_to_color(
+            ratenow_value, Colors.WHITE_DARK, Colors.WHITE_DARK, Colors.YELLOW_DARK
+        )
         ratenow_label.x = ratenow_pos[0] + 3 if state["mode"] == "on" else 0
         ratenow_label.y = ratenow_pos[1] + 5 if state["mode"] == "on" else 29
-        ratenow_label.text = f"{ratenow_value*100:.1f}"
 
-        ratenext_label.text = f"{ratenext_value*100:.1f}"
-        ratenext_rect.outline = rate_to_color(ratenext_value, COLOR_DIMMED)
+        ratenext_rect.outline = (
+            rate_to_color(ratenext_value, Colors.GREEN_DARK, Colors.RED_DARK, None)
+            if state["mode"] == "on"
+            else None
+        )
+        ratenext_label.text = f"{int(round(ratenext_value))}"
+        ratenext_label.color = (
+            rate_to_color(
+                ratenow_value, Colors.WHITE_DARK, Colors.WHITE_DARK, Colors.YELLOW_DARK
+            )
+            if state["mode"] == "on"
+            else None
+        )
 
-        cheaprate_label.text =f"{state['period_lowest']}"
+        cheaprate_label.text = f"{state['period_lowest']}"
+        cheaprate_label.color = (
+            Colors.BLUE_DARK if state["mode"] == "on" else None
+        )
 
 
 # STATE
 frame = 0
 state = {}
+
 
 # APP LOGIC
 
@@ -285,17 +292,20 @@ try:
                 state["rates"] = get_current_and_next_agile_rates(
                     requests, OCTOPUS_FETCH_PERIODS
                 )
-                state["period_lowest"] = find_lowest_contiguous_period(state["rates"], 4)[-8:-3]
+                state["period_lowest"] = find_lowest_contiguous_period(
+                    state["rates"], 4
+                )[-8:-3]
                 gc.collect()
                 logger(f"Fetch: Rates={state['rates']}")
                 initialised = True
             except Exception as e:
-                logger(f"Error: Octopus Fetch Exception: {e}")            
+                logger(f"Error: Octopus Fetch Exception: {e}")
 
         if new_min or not initialised:
             logger(f"Debug: Frame={frame} State={state}")
             state["mode"] = get_timer_mode(now)
             try:
+                display.brightness = 1.0 if state["mode"] != "off" else 0.0
                 draw(frame, now, state)
             except Exception as e:
                 logger(f"Error: Draw Exception: {e}")
