@@ -167,9 +167,9 @@ def parse_timestamp(timestamp, is_dst=-1):
 
 
 def rate_to_color(rate, low_color, high_color, default_color):
-    if (rate * 100) < OCTOPUS_RATE_LOW:
+    if rate < OCTOPUS_RATE_LOW:
         return low_color
-    elif (rate * 100) > OCTOPUS_RATE_HIGH:
+    elif rate > OCTOPUS_RATE_HIGH:
         return high_color
     else:
         return default_color

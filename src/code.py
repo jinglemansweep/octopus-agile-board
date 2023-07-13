@@ -87,8 +87,8 @@ requests = network.requests
 logger(f"Host ID: {host_id}")
 
 # TIME
-set_current_time(requests)
-gc.collect()
+#set_current_time(requests)
+#gc.collect()
 
 
 # GPIO
@@ -204,6 +204,7 @@ root_group.append(ratenext_label)
 
 # SPRITE: CHEAPEST RATE
 cheaprate_pos = (2, 27)
+cheaprate_pos_dark = (24, 29)
 cheaprate_label = Label(
     x=cheaprate_pos[0],
     y=cheaprate_pos[1],
@@ -215,7 +216,7 @@ root_group.append(cheaprate_label)
 
 # SPRITE: DEBUG (FREE MEMORY)
 debug_pos = (35, 27)
-debug_pos_dark = (37, 29)
+debug_pos_dark = (0, 8)
 debug_label = Label(
     x=debug_pos[0],
     y=debug_pos[1],
@@ -257,15 +258,15 @@ def draw(frame, now, state):
         ratenow_value, ratenext_value = state["rates"][0][1], state["rates"][1][1]
 
         border_rect.outline = (
-            rate_to_color(ratenow_value, Colors.GREEN_DARK, Colors.RED_DARK, None)
+            rate_to_color(ratenow_value, Colors.GREEN_DARK, Colors.RED_DARK, Colors.OFF)
             if state["mode"] == MODE_ON
-            else None
+            else Colors.OFF
         )
 
         ratenow_rect.outline = (
-            rate_to_color(ratenow_value, Colors.GREEN_DARK, Colors.RED_DARK, None)
+            rate_to_color(ratenow_value, Colors.GREEN_DARK, Colors.RED_DARK, Colors.BLUE_DARK)
             if state["mode"] == MODE_ON
-            else None
+            else Colors.OFF
         )
         ratenow_label.text = f"{int(round(ratenow_value))}"
         ratenow_label.color = (
@@ -285,9 +286,9 @@ def draw(frame, now, state):
         )
 
         ratenext_rect.outline = (
-            rate_to_color(ratenext_value, Colors.GREEN_DARK, Colors.RED_DARK, None)
+            rate_to_color(ratenext_value, Colors.GREEN_DARK, Colors.RED_DARK, Colors.BLUE_DARK)
             if state["mode"] == MODE_ON
-            else None
+            else Colors.OFF
         )
         ratenext_label.text = f"{int(round(ratenext_value))}"
         ratenext_label.color = rate_to_color(
@@ -295,7 +296,6 @@ def draw(frame, now, state):
         ) if state["mode"] == MODE_ON else rate_to_color(
                 ratenext_value, Colors.GREEN_DARK, Colors.RED_DARK, Colors.MAGENTA_DARK
         )
-
         ratenext_label.x = (
             ratenext_pos[0] + 3 if state["mode"] == MODE_ON else ratenext_pos_dark[0]
         )
@@ -304,7 +304,13 @@ def draw(frame, now, state):
         )
 
         cheaprate_label.text = f"{state['period_lowest']}"
-        cheaprate_label.color = Colors.BLUE_DARK if state["mode"] == MODE_ON else None
+        cheaprate_label.color = Colors.BLUE_DARK if state["mode"] == MODE_ON else Colors.OFF
+        cheaprate_label.x = (
+            cheaprate_pos[0] if state["mode"] == MODE_ON else cheaprate_pos_dark[0]
+        )
+        cheaprate_label.y = (
+            cheaprate_pos[1] if state["mode"] == MODE_ON else cheaprate_pos_dark[1]
+        )
 
 # APP LOGIC
 
@@ -312,8 +318,8 @@ logger("Start Event Loop")
 initialised = False
 ts = time.monotonic()
 
-
 mode_idx = 0
+error_count = 0
 
 try:
     while True:
@@ -335,7 +341,8 @@ try:
         # DRAW DISPLAY
 
         if new_sec or not initialised:
-            logger(f"Debug: Frame={frame} State={state}")
+            if frame % 10 == 0:
+                logger(f"Debug: Frame={frame} State={state}")
             try:
                 display.brightness = 1.0 if state["mode"] != MODE_OFF else 0.0
                 draw(frame, now, state)
@@ -346,8 +353,12 @@ try:
 
         if (new_hour and now.tm_hour % NTP_UPDATE_HOURS == 0) or not initialised:
             logger(f"NTP: Fetch Time")
-            set_current_time(requests)
-            gc.collect()
+            try:
+                set_current_time(requests)
+                gc.collect()
+            except Exception as e:
+                logger(f("NTP: Fetch Error: {e}"))
+                error_count += 1
 
         # PERIODIC UPDATE: AGILE RATES
 
@@ -364,7 +375,12 @@ try:
                 initialised = True
             except Exception as e:
                 logger(f"Error: Octopus Fetch Exception: {e}")
+                error_count += 1
 
+        # HANDLE PERSISTENT ERRORS
+
+        if error_count > 10:
+            raise Exception("Too Many Errors")
 
         frame += 1
         time.sleep(0.1)
