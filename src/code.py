@@ -266,7 +266,7 @@ def draw(frame, now, state):
             )
         )
         ratenow_label.x = (
-            ratenow_pos[0] + 3 if state["mode"] == MODE_ON else ratenow_pos_dark[0]
+            ratenow_pos[0] + 7 if state["mode"] == MODE_ON else ratenow_pos_dark[0]
         )
         ratenow_label.y = (
             ratenow_pos[1] + 5 if state["mode"] == MODE_ON else ratenow_pos_dark[1]
@@ -284,7 +284,7 @@ def draw(frame, now, state):
                 ratenext_value, Colors.GREEN_DARK, Colors.RED_DARK, Colors.MAGENTA_DARK
         )
         ratenext_label.x = (
-            ratenext_pos[0] + 3 if state["mode"] == MODE_ON else ratenext_pos_dark[0]
+            ratenext_pos[0] + 7 if state["mode"] == MODE_ON else ratenext_pos_dark[0]
         )
         ratenext_label.y = (
             ratenext_pos[1] + 5 if state["mode"] == MODE_ON else ratenext_pos_dark[1]
