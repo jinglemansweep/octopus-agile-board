@@ -343,7 +343,9 @@ def draw(frame, now, state):
 # APP LOGIC
 
 logger("Start Event Loop")
-initialised = False
+ready = False
+ready_time = False
+ready_agile = False
 ts = time.monotonic()
 
 mode_idx = 0
@@ -351,10 +353,12 @@ error_count = 0
 
 try:
     while True:
+
+        # LOOP STATE
         now = datetime.datetime.now().timetuple()
         ts, (new_hour, new_min, new_sec) = get_new_epochs(ts)
-
         state["mode"] = MODES[mode_idx]
+        ready = all([ready_time, ready_agile])
 
         # MODE BUTTONS
 
@@ -365,41 +369,45 @@ try:
             if mode_idx > len(MODES) - 1:
                 mode_idx = 0
             logger(f"Button: Mode Switch: {mode_idx}")
-        
+
+        # DEBUG
+
+        if frame % 10 == 0:
+            logger(f"Debug: Ready={ready} Frame={frame} State={state}")
+
         # DRAW DISPLAY
 
-        if new_sec or not initialised:
-            if frame % 10 == 0:
-                logger(f"Debug: Frame={frame} State={state}")
+        if new_sec and ready:
             try:
                 display.brightness = 1.0 if state["mode"] != MODE_OFF else 0.0
                 draw(frame, now, state)
             except Exception as e:
                 logger(f"Error: Draw Exception: {e}")
 
+        # PERIODIC UPDATE: NTP
+
+        if (new_hour and now.tm_hour % NTP_UPDATE_HOURS == 0) or not ready_time:
+            logger(f"NTP: Fetch Time")
+            try:
+                set_current_time(requests)
+                gc.collect()
+                ready_time = True
+            except Exception as e:
+                logger(f("NTP: Fetch Error: {e}"))
+                error_count += 1
+
         # PERIODIC UPDATE: AGILE RATES
 
-        if (new_min and now.tm_min % OCTOPUS_UPDATE_MINS == 0) or not initialised:
+        if ready_time and ((new_min and now.tm_min % OCTOPUS_UPDATE_MINS == 0) or not ready_agile):
             try:
                 state["rates"] = get_current_and_next_agile_rates(
                     requests, OCTOPUS_FETCH_PERIODS
                 )
                 gc.collect()
                 logger(f"Fetch: Rates={state['rates']}")
-                initialised = True
+                ready_agile = True
             except Exception as e:
                 logger(f"Error: Octopus Fetch Exception: {e}")
-                error_count += 1
-
-        # PERIODIC UPDATE: NTP
-
-        if (new_hour and now.tm_hour % NTP_UPDATE_HOURS == 0) or not initialised:
-            logger(f"NTP: Fetch Time")
-            try:
-                set_current_time(requests)
-                gc.collect()
-            except Exception as e:
-                logger(f("NTP: Fetch Error: {e}"))
                 error_count += 1
 
 
