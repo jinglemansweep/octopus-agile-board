@@ -104,7 +104,7 @@ frame = 0
 state = {}
 
 # THEME
-COLOR_DIMMED = Colors.BLUE_DARK
+COLOR_DIM = Colors.MAGENTA_DARK
 
 # SPRITE: BORDER
 border_pos = (0, 0)
@@ -116,7 +116,7 @@ border_rect = RoundRect(
     border_size[0],
     border_size[1],
     r=1,
-    outline=COLOR_DIMMED,
+    outline=COLOR_DIM,
     stroke=border_stroke,
 )
 root_group.append(border_rect)
@@ -157,49 +157,75 @@ time_label = Label(
 )
 root_group.append(time_label)
 
-# SPRITE: RATE NOW
-ratenow_pos = (7, 11)
-ratenow_pos_dark = (0, 29)
-ratenow_size = (21, 11)
-ratenow_rect = RoundRect(
-    ratenow_pos[0],
-    ratenow_pos[1],
-    ratenow_size[0],
-    ratenow_size[1],
+# SPRITE: RATE 0 (NOW)
+rate0_pos = (4, 11)
+rate0_pos_dark = (0, 29)
+rate0_size = (20, 16)
+rate0_label_offset = (3, 7)
+rate0_rect = RoundRect(
+    rate0_pos[0],
+    rate0_pos[1],
+    rate0_size[0],
+    rate0_size[1],
     r=1,
-    outline=COLOR_DIMMED,
+    outline=COLOR_DIM,
 )
-root_group.append(ratenow_rect)
-ratenow_label = Label(
-    x=ratenow_pos[0] + 3,
-    y=ratenow_pos[1] + 5,
+root_group.append(rate0_rect)
+rate0_label = Label(
+    x=rate0_pos[0] + rate0_label_offset[0],
+    y=rate0_pos[1] + rate0_label_offset[1],
     font=FONT,
-    text=".",
+    text="00",
     color=Colors.YELLOW_DARK,
+    scale=2
 )
-root_group.append(ratenow_label)
+root_group.append(rate0_label)
 
-# SPRITE: RATE NEXT
-ratenext_pos = (35, 11)
-ratenext_pos_dark = (12, 29)
-ratenext_size = (21, 11)
-ratenext_rect = RoundRect(
-    ratenext_pos[0],
-    ratenext_pos[1],
-    ratenext_size[0],
-    ratenext_size[1],
+# SPRITE: RATE 1 (NEXT)
+rate1_pos = (27, 11)
+rate1_pos_dark = (12, 29)
+rate1_size = (15, 11)
+rate1_label_offset = (4, 5)
+rate1_rect = RoundRect(
+    rate1_pos[0],
+    rate1_pos[1],
+    rate1_size[0],
+    rate1_size[1],
     r=1,
-    outline=COLOR_DIMMED,
+    outline=COLOR_DIM,
 )
-root_group.append(ratenext_rect)
-ratenext_label = Label(
-    x=ratenext_pos[0] + 3,
-    y=ratenext_pos[1] + 5,
+root_group.append(rate1_rect)
+rate1_label = Label(
+    x=rate1_pos[0] + rate1_label_offset[0],
+    y=rate1_pos[1] + rate1_label_offset[1],
     font=FONT,
-    text=".",
+    text="00",
     color=Colors.YELLOW_DARK,
 )
-root_group.append(ratenext_label)
+root_group.append(rate1_label)
+
+# SPRITE: RATE 2 (LATER)
+rate2_pos = (45, 11)
+rate2_pos_dark = (12, 29)
+rate2_size = (15, 11)
+rate2_label_offset = (4, 5)
+rate2_rect = RoundRect(
+    rate2_pos[0],
+    rate2_pos[1],
+    rate2_size[0],
+    rate2_size[1],
+    r=1,
+    outline=COLOR_DIM,
+)
+root_group.append(rate2_rect)
+rate2_label = Label(
+    x=rate2_pos[0] + rate2_label_offset[0],
+    y=rate2_pos[1] + rate2_label_offset[1],
+    font=FONT,
+    text="00",
+    color=Colors.YELLOW_DARK,
+)
+root_group.append(rate2_label)
 
 # SPRITE: DEBUG (FREE MEMORY)
 debug_pos = (35, 27)
@@ -209,7 +235,7 @@ debug_label = Label(
     y=debug_pos[1],
     font=FONT,
     text="",
-    color=COLOR_DIMMED,
+    color=Colors.YELLOW_DARK,
 )
 if DEBUG:
     root_group.append(debug_label)
@@ -239,56 +265,80 @@ def draw(frame, now, state):
 
     if "rates" in state:
 
-        # need to convert current time to 30 min period, plus the next period, and use as lookup in "rates" object
-        # e.g. [("2023-07-14-T22:00:00", 0.245), ("2023-07-14-T22:30:00", 0.245)]
+        rate0_value, rate1_value, rate2_value = state["rates"][0][1], state["rates"][1][1], state["rates"][2][1]
 
-        ratenow_value, ratenext_value = state["rates"][0][1], state["rates"][1][1]
+        # BORDER
 
         border_rect.outline = (
-            rate_to_color(ratenow_value, Colors.GREEN_DARK, Colors.RED_DARK, Colors.OFF)
+            rate_to_color(rate0_value, Colors.GREEN_DARK, Colors.RED_DARK, Colors.OFF)
             if state["mode"] == MODE_ON
             else Colors.OFF
         )
 
-        ratenow_rect.outline = (
-            rate_to_color(ratenow_value, Colors.GREEN_DARK, Colors.RED_DARK, Colors.BLUE_DARK)
+        # RATE 0
+
+        rate0_rect.outline = (
+            rate_to_color(rate0_value, Colors.GREEN_DARK, Colors.RED_DARK, COLOR_DIM)
             if state["mode"] == MODE_ON
             else Colors.OFF
+
         )
-        ratenow_label.text = f"{int(round(ratenow_value))}"
-        ratenow_label.color = (
+        rate0_label.text = f"{int(round(rate0_value))}"
+        rate0_label.color = (
             rate_to_color(
-                ratenow_value, Colors.WHITE_DARK, Colors.WHITE_DARK, Colors.YELLOW_DARK
+                rate0_value, Colors.WHITE_DARK, Colors.WHITE_DARK, Colors.YELLOW_DARK
             )
             if state["mode"] == MODE_ON
             else rate_to_color(
-                ratenow_value, Colors.GREEN_DARK, Colors.RED_DARK, Colors.MAGENTA_DARK
+                rate0_value, Colors.GREEN_DARK, Colors.RED_DARK, Colors.MAGENTA_DARK
             )
         )
-        ratenow_label.x = (
-            ratenow_pos[0] + 7 if state["mode"] == MODE_ON else ratenow_pos_dark[0]
+        rate0_label.x = (
+            rate0_pos[0] + rate0_label_offset[0] if state["mode"] == MODE_ON else rate0_pos_dark[0]
         )
-        ratenow_label.y = (
-            ratenow_pos[1] + 5 if state["mode"] == MODE_ON else ratenow_pos_dark[1]
+        rate0_label.y = (
+            rate0_pos[1] + rate0_label_offset[1] if state["mode"] == MODE_ON else rate_pos_dark[1]
         )
 
-        ratenext_rect.outline = (
-            rate_to_color(ratenext_value, Colors.GREEN_DARK, Colors.RED_DARK, Colors.BLUE_DARK)
+        # RATE 1
+
+        rate1_rect.outline = (
+            rate_to_color(rate1_value, Colors.GREEN_DARK, Colors.RED_DARK, COLOR_DIM)
             if state["mode"] == MODE_ON
             else Colors.OFF
         )
-        ratenext_label.text = f"{int(round(ratenext_value))}"
-        ratenext_label.color = rate_to_color(
-            ratenow_value, Colors.WHITE_DARK, Colors.WHITE_DARK, Colors.YELLOW_DARK
+        rate1_label.text = f"{int(round(rate1_value))}"
+        rate1_label.color = rate_to_color(
+            rate0_value, Colors.WHITE_DARK, Colors.WHITE_DARK, Colors.YELLOW_DARK
         ) if state["mode"] == MODE_ON else rate_to_color(
-                ratenext_value, Colors.GREEN_DARK, Colors.RED_DARK, Colors.MAGENTA_DARK
+                rate1_value, Colors.GREEN_DARK, Colors.RED_DARK, Colors.MAGENTA_DARK
         )
-        ratenext_label.x = (
-            ratenext_pos[0] + 7 if state["mode"] == MODE_ON else ratenext_pos_dark[0]
+        rate1_label.x = (
+            rate1_pos[0] + rate1_label_offset[0] if state["mode"] == MODE_ON else rate1_pos_dark[0]
         )
-        ratenext_label.y = (
-            ratenext_pos[1] + 5 if state["mode"] == MODE_ON else ratenext_pos_dark[1]
+        rate1_label.y = (
+            rate1_pos[1] + rate1_label_offset[1] if state["mode"] == MODE_ON else rate1_pos_dark[1]
         )
+
+        # RATE 1
+
+        rate2_rect.outline = (
+            rate_to_color(rate2_value, Colors.GREEN_DARK, Colors.RED_DARK, COLOR_DIM)
+            if state["mode"] == MODE_ON
+            else Colors.OFF
+        )
+        rate2_label.text = f"{int(round(rate2_value))}"
+        rate2_label.color = rate_to_color(
+            rate0_value, Colors.WHITE_DARK, Colors.WHITE_DARK, Colors.YELLOW_DARK
+        ) if state["mode"] == MODE_ON else rate_to_color(
+                rate2_value, Colors.GREEN_DARK, Colors.RED_DARK, Colors.MAGENTA_DARK
+        )
+        rate2_label.x = (
+            rate2_pos[0] + rate2_label_offset[0] if state["mode"] == MODE_ON else rate2_pos_dark[0]
+        )
+        rate2_label.y = (
+            rate2_pos[1] + rate2_label_offset[1] if state["mode"] == MODE_ON else rate2_pos_dark[1]
+        )        
 
 # APP LOGIC
 
