@@ -24,6 +24,7 @@ from app.constants import (
 
 DATETIME_API = f"http://worldtimeapi.org/api/timezone/{NTP_TIMEZONE}"
 OCTOPUS_TARIFF_CODE = f"E-1R-{OCTOPUS_PRODUCT_CODE}-A"
+OCTOPUS_PERIOD_MINS = 30
 
 
 def logger(msg, *args):
@@ -72,8 +73,8 @@ def get_timer_mode(now_tuple):
 
 
 def fetch_json(requests, url):
-    response = requests.get(url)
     gc.collect()
+    response = requests.get(url)
     return json.loads(response.text)
 
 
@@ -90,16 +91,19 @@ def set_current_time(requests):
         logger(f"Failed Network Time Fetch: {error}")
 
 
-def get_current_and_next_agile_rates(requests):
+def get_current_and_next_agile_rates(
+    requests, periods, period_size_mins=OCTOPUS_PERIOD_MINS
+):
     now = datetime.datetime.now()
     rounded_minute = 0 if now.minute < 30 else 30
     period_from = now.replace(
         minute=rounded_minute, second=0, microsecond=0, tzinfo=None
     )
-    period_to = period_from + datetime.timedelta(hours=1)
+    period_to = period_from + datetime.timedelta(minutes=periods * period_size_mins)
     logger(
         f"Time Periods: Now={now.isoformat()} From={period_from.isoformat()} End={period_to.isoformat()}"
     )
+    gc.collect()
     url = f"{OCTOPUS_API_URL}/v1/products/{OCTOPUS_PRODUCT_CODE}/electricity-tariffs/{OCTOPUS_TARIFF_CODE}/standard-unit-rates?period_from={period_from}&period_to={period_to}"
     resp = fetch_json(requests, url)
     sorted_data = sorted(resp["results"], key=lambda x: x["valid_from"])
@@ -110,6 +114,22 @@ def get_current_and_next_agile_rates(requests):
         ) + datetime.timedelta(hours=1)
         rates.append((dt_from.isoformat(), r["value_inc_vat"] / 100))
     return rates
+
+
+def find_lowest_contiguous_period(prices, periods):
+    if periods > len(prices):
+        return None  # Not enough data to find X hours
+    min_period_start = 0
+    min_period_end = periods - 1
+    min_period_sum = sum([price for _, price in prices[min_period_start:min_period_end + 1]])
+    current_sum = min_period_sum
+    for i in range(periods, len(prices)):
+        current_sum += prices[i][1] - prices[i - periods][1]
+        if current_sum < min_period_sum:
+            min_period_sum = current_sum
+            min_period_start = i - periods + 1
+            min_period_end = i
+    return prices[min_period_start][0]
 
 
 def get_new_epochs(ts_last=None):
@@ -129,16 +149,15 @@ def get_new_epochs(ts_last=None):
 
 
 def build_date_fmt(now_tuple):
-    day_name = convert_day_name(now_tuple.tm_wday)
-    return f"{day_name} {now_tuple.tm_mday:02}/{now_tuple.tm_mon:02}"
+    return f"{now_tuple.tm_mday:02}/{now_tuple.tm_mon:02}"
 
 
 def build_time_fmt(now_tuple):
     return f"{now_tuple.tm_hour:02}:{now_tuple.tm_min:02}"
 
 
-def convert_day_name(weekday):
-    return WEEKDAY_NAMES[weekday]
+def build_dow_fmt(now_tuple):
+    return WEEKDAY_NAMES[now_tuple.tm_wday]
 
 
 def parse_timestamp(timestamp, is_dst=-1):

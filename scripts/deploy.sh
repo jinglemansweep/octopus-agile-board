@@ -15,7 +15,7 @@ echo
 echo "Syncronising project source to destination device (${dest_dir})..."
 echo
 rsync -av --inplace "${base_dir}/src/" "${dest_dir}/"
-cp -rv "${base_dir}/assets" "${base_dir}/settings.toml" "${base_dir}/secrets.py" "${dest_dir}/"
+cp -rv "${base_dir}/assets" "${base_dir}/secrets.py" "${dest_dir}/"
 echo
 
 echo "DONE"
