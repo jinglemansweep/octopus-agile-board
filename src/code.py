@@ -297,7 +297,7 @@ def draw(frame, now, state):
             rate0_pos[0] + rate0_label_offset[0] if state["mode"] == MODE_ON else rate0_pos_dark[0]
         )
         rate0_label.y = (
-            rate0_pos[1] + rate0_label_offset[1] if state["mode"] == MODE_ON else rate_pos_dark[1]
+            rate0_pos[1] + rate0_label_offset[1] if state["mode"] == MODE_ON else rate0_pos_dark[1]
         )
 
         # RATE 1
