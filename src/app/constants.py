@@ -18,7 +18,7 @@ TIMER_SLEEP = secrets.get("timer_sleep", 23)
 
 OCTOPUS_API_URL = secrets.get("octopus_api_url", "https://api.octopus.energy")
 OCTOPUS_PRODUCT_CODE = secrets.get("octopus_product_code", "AGILE-FLEX-22-11-25")
-OCTOPUS_UPDATE_MINS = int(secrets.get("octopus_update_mins", 15))
+OCTOPUS_UPDATE_HOURS = int(secrets.get("octopus_update_hours", 2))
 OCTOPUS_FETCH_PERIODS = int(secrets.get("octopus_fetch_periods", 12))
 OCTOPUS_RATE_LOW = int(secrets.get("octopus_rate_low", 10))
 OCTOPUS_RATE_HIGH = int(secrets.get("octopus_rate_high", 30))

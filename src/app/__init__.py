@@ -9,6 +9,7 @@ from adafruit_bitmap_font import bitmap_font
 from adafruit_display_text.label import Label
 from adafruit_display_shapes.rect import Rect
 from adafruit_display_shapes.roundrect import RoundRect
+from adafruit_matrixportal.matrix import Matrix
 from adafruit_matrixportal.network import Network
 from displayio import Group
 
@@ -18,7 +19,7 @@ from app.constants import (
     MATRIX_HEIGHT,
     MATRIX_BIT_DEPTH,
     MATRIX_COLOR_ORDER,
-    OCTOPUS_UPDATE_MINS,
+    OCTOPUS_UPDATE_HOURS,
     OCTOPUS_FETCH_PERIODS,
     TIMER_WAKE,
     TIMER_DARK,
@@ -72,7 +73,7 @@ gc.collect()
 
 # RGB MATRIX
 logger("Configuring RGB Matrix")
-from adafruit_matrixportal.matrix import Matrix
+
 
 matrix = Matrix(
     width=MATRIX_WIDTH,
