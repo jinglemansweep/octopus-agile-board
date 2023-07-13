@@ -22,7 +22,7 @@ from constants import (
     MATRIX_BIT_DEPTH,
     MATRIX_COLOR_ORDER,
     NTP_UPDATE_HOURS,
-    OCTOPUS_UPDATE_HOURS,
+    OCTOPUS_UPDATE_MINS,
     OCTOPUS_FETCH_PERIODS,
     TIME_ON,
     TIME_DARK,
@@ -39,7 +39,6 @@ from utils import (
     get_new_epochs,
     set_current_time,
     get_current_and_next_agile_rates,
-    find_lowest_contiguous_period,
     build_date_fmt,
     build_time_fmt,
     build_dow_fmt,
@@ -202,18 +201,6 @@ ratenext_label = Label(
 )
 root_group.append(ratenext_label)
 
-# SPRITE: CHEAPEST RATE
-cheaprate_pos = (2, 27)
-cheaprate_pos_dark = (24, 29)
-cheaprate_label = Label(
-    x=cheaprate_pos[0],
-    y=cheaprate_pos[1],
-    font=FONT,
-    text="",
-    color=COLOR_DIMMED,
-)
-root_group.append(cheaprate_label)
-
 # SPRITE: DEBUG (FREE MEMORY)
 debug_pos = (35, 27)
 debug_pos_dark = (0, 8)
@@ -303,15 +290,6 @@ def draw(frame, now, state):
             ratenext_pos[1] + 5 if state["mode"] == MODE_ON else ratenext_pos_dark[1]
         )
 
-        cheaprate_label.text = f"{state['period_lowest']}"
-        cheaprate_label.color = Colors.BLUE_DARK if state["mode"] == MODE_ON else Colors.OFF
-        cheaprate_label.x = (
-            cheaprate_pos[0] if state["mode"] == MODE_ON else cheaprate_pos_dark[0]
-        )
-        cheaprate_label.y = (
-            cheaprate_pos[1] if state["mode"] == MODE_ON else cheaprate_pos_dark[1]
-        )
-
 # APP LOGIC
 
 logger("Start Event Loop")
@@ -349,6 +327,20 @@ try:
             except Exception as e:
                 logger(f"Error: Draw Exception: {e}")
 
+        # PERIODIC UPDATE: AGILE RATES
+
+        if (new_min and now.tm_min % OCTOPUS_UPDATE_MINS == 0) or not initialised:
+            try:
+                state["rates"] = get_current_and_next_agile_rates(
+                    requests, OCTOPUS_FETCH_PERIODS
+                )
+                gc.collect()
+                logger(f"Fetch: Rates={state['rates']}")
+                initialised = True
+            except Exception as e:
+                logger(f"Error: Octopus Fetch Exception: {e}")
+                error_count += 1
+
         # PERIODIC UPDATE: NTP
 
         if (new_hour and now.tm_hour % NTP_UPDATE_HOURS == 0) or not initialised:
@@ -360,22 +352,6 @@ try:
                 logger(f("NTP: Fetch Error: {e}"))
                 error_count += 1
 
-        # PERIODIC UPDATE: AGILE RATES
-
-        if (new_hour and now.tm_hour % OCTOPUS_UPDATE_HOURS == 0) or not initialised:
-            try:
-                state["rates"] = get_current_and_next_agile_rates(
-                    requests, OCTOPUS_FETCH_PERIODS
-                )
-                state["period_lowest"] = find_lowest_contiguous_period(
-                    state["rates"], 4
-                )[-8:-3]
-                gc.collect()
-                logger(f"Fetch: Rates={state['rates']}")
-                initialised = True
-            except Exception as e:
-                logger(f"Error: Octopus Fetch Exception: {e}")
-                error_count += 1
 
         # HANDLE PERSISTENT ERRORS
 
