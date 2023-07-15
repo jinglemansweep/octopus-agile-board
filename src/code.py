@@ -104,7 +104,7 @@ frame = 0
 state = {}
 
 # THEME
-COLOR_DIM = Colors.MAGENTA_DARK
+COLOR_DIM = Colors.BLUE_DARK
 
 # SPRITE: BORDER
 border_pos = (0, 0)
@@ -176,7 +176,7 @@ rate0_label = Label(
     y=rate0_pos[1] + rate0_label_offset[1],
     font=FONT,
     text="00",
-    color=Colors.YELLOW_DARK,
+    color=COLOR_DIM,
     scale=2
 )
 root_group.append(rate0_label)
@@ -200,7 +200,7 @@ rate1_label = Label(
     y=rate1_pos[1] + rate1_label_offset[1],
     font=FONT,
     text="00",
-    color=Colors.YELLOW_DARK,
+    color=COLOR_DIM,
 )
 root_group.append(rate1_label)
 
@@ -223,7 +223,7 @@ rate2_label = Label(
     y=rate2_pos[1] + rate2_label_offset[1],
     font=FONT,
     text="00",
-    color=Colors.YELLOW_DARK,
+    color=COLOR_DIM,
 )
 root_group.append(rate2_label)
 
@@ -235,7 +235,7 @@ debug_label = Label(
     y=debug_pos[1],
     font=FONT,
     text="",
-    color=Colors.YELLOW_DARK,
+    color=COLOR_DIM,
 )
 if DEBUG:
     root_group.append(debug_label)
@@ -286,11 +286,11 @@ def draw(frame, now, state):
         rate0_label.text = f"{int(round(rate0_value))}"
         rate0_label.color = (
             rate_to_color(
-                rate0_value, Colors.WHITE_DARK, Colors.WHITE_DARK, Colors.YELLOW_DARK
+                rate0_value, Colors.WHITE_DARK, Colors.WHITE_DARK, COLOR_DIM
             )
             if state["mode"] == MODE_ON
             else rate_to_color(
-                rate0_value, Colors.GREEN_DARK, Colors.RED_DARK, Colors.MAGENTA_DARK
+                rate0_value, Colors.GREEN_DARK, Colors.RED_DARK, COLOR_DIM
             )
         )
         rate0_label.x = (
@@ -309,9 +309,9 @@ def draw(frame, now, state):
         )
         rate1_label.text = f"{int(round(rate1_value))}"
         rate1_label.color = rate_to_color(
-            rate0_value, Colors.WHITE_DARK, Colors.WHITE_DARK, Colors.YELLOW_DARK
+            rate0_value, Colors.WHITE_DARK, Colors.WHITE_DARK, COLOR_DIM
         ) if state["mode"] == MODE_ON else rate_to_color(
-                rate1_value, Colors.GREEN_DARK, Colors.RED_DARK, Colors.MAGENTA_DARK
+                rate1_value, Colors.GREEN_DARK, Colors.RED_DARK, COLOR_DIM
         )
         rate1_label.x = (
             rate1_pos[0] + rate1_label_offset[0] if state["mode"] == MODE_ON else rate1_pos_dark[0]
@@ -329,9 +329,9 @@ def draw(frame, now, state):
         )
         rate2_label.text = f"{int(round(rate2_value))}"
         rate2_label.color = rate_to_color(
-            rate0_value, Colors.WHITE_DARK, Colors.WHITE_DARK, Colors.YELLOW_DARK
+            rate0_value, Colors.WHITE_DARK, Colors.WHITE_DARK, COLOR_DIM.BLUE_DARK
         ) if state["mode"] == MODE_ON else rate_to_color(
-                rate2_value, Colors.GREEN_DARK, Colors.RED_DARK, Colors.MAGENTA_DARK
+                rate2_value, Colors.GREEN_DARK, Colors.RED_DARK, COLOR_DIM
         )
         rate2_label.x = (
             rate2_pos[0] + rate2_label_offset[0] if state["mode"] == MODE_ON else rate2_pos_dark[0]

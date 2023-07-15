@@ -18,5 +18,8 @@ rsync -av --inplace "${base_dir}/src/" "${dest_dir}/"
 cp -rv "${base_dir}/assets" "${base_dir}/secrets.py" "${dest_dir}/"
 echo
 
+echo "Syncing filesystems..."
+sync
+
 echo "DONE"
 echo
