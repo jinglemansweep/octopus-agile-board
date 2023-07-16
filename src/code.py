@@ -329,7 +329,7 @@ def draw(frame, now, state):
         )
         rate2_label.text = f"{int(round(rate2_value))}"
         rate2_label.color = rate_to_color(
-            rate0_value, Colors.WHITE_DARK, Colors.WHITE_DARK, COLOR_DIM.BLUE_DARK
+            rate0_value, Colors.WHITE_DARK, Colors.WHITE_DARK, COLOR_DIM
         ) if state["mode"] == MODE_ON else rate_to_color(
                 rate2_value, Colors.GREEN_DARK, Colors.RED_DARK, COLOR_DIM
         )
