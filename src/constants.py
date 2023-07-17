@@ -57,4 +57,4 @@ MODE_OFF = 0
 MODE_ON = 1
 MODE_DARK = 2
 
-MODES = [MODE_ON, MODE_OFF] # Dark Mode Disabled For Now
+MODES = [MODE_ON, MODE_OFF]  # Dark Mode Disabled For Now

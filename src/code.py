@@ -1,4 +1,3 @@
-
 import board
 import gc
 import microcontroller
@@ -86,8 +85,8 @@ requests = network.requests
 logger(f"Host ID: {host_id}")
 
 # TIME
-#set_current_time(requests)
-#gc.collect()
+# set_current_time(requests)
+# gc.collect()
 
 
 # GPIO
@@ -177,7 +176,7 @@ rate0_label = Label(
     font=FONT,
     text="00",
     color=COLOR_DIM,
-    scale=2
+    scale=2,
 )
 root_group.append(rate0_label)
 
@@ -265,80 +264,56 @@ def draw(frame, now, state):
 
     if "rates" in state:
 
-        rate0_value, rate1_value, rate2_value = state["rates"][0][1], state["rates"][1][1], state["rates"][2][1]
+        rate0_value, rate1_value, rate2_value = (
+            state["rates"][0][1],
+            state["rates"][1][1],
+            state["rates"][2][1],
+        )
 
         # BORDER
 
-        border_rect.outline = (
-            rate_to_color(rate0_value, Colors.GREEN_DARK, Colors.RED_DARK, Colors.OFF)
-            if state["mode"] == MODE_ON
-            else Colors.OFF
+        border_rect.outline = rate_to_color(
+            rate0_value, Colors.GREEN_DARK, Colors.RED_DARK, Colors.OFF
         )
 
         # RATE 0
 
-        rate0_rect.outline = (
-            rate_to_color(rate0_value, Colors.GREEN_DARK, Colors.RED_DARK, COLOR_DIM)
-            if state["mode"] == MODE_ON
-            else Colors.OFF
-
+        rate0_rect.outline = rate_to_color(
+            rate0_value, Colors.GREEN_DARK, Colors.RED_DARK, COLOR_DIM
         )
         rate0_label.text = f"{int(round(rate0_value))}"
-        rate0_label.color = (
-            rate_to_color(
-                rate0_value, Colors.WHITE_DARK, Colors.WHITE_DARK, COLOR_DIM
-            )
-            if state["mode"] == MODE_ON
-            else rate_to_color(
-                rate0_value, Colors.GREEN_DARK, Colors.RED_DARK, COLOR_DIM
-            )
+        rate0_label.color = rate_to_color(
+            rate0_value, Colors.GREEN_DARK, Colors.RED_DARK, COLOR_DIM
         )
-        rate0_label.x = (
-            rate0_pos[0] + rate0_label_offset[0] if state["mode"] == MODE_ON else rate0_pos_dark[0]
-        )
-        rate0_label.y = (
-            rate0_pos[1] + rate0_label_offset[1] if state["mode"] == MODE_ON else rate0_pos_dark[1]
-        )
+        rate0_label.x = rate0_pos[0] + rate0_label_offset[0]
+        rate0_label.y = rate0_pos[1] + rate0_label_offset[1]
 
         # RATE 1
 
-        rate1_rect.outline = (
-            rate_to_color(rate1_value, Colors.GREEN_DARK, Colors.RED_DARK, COLOR_DIM)
-            if state["mode"] == MODE_ON
-            else Colors.OFF
+        rate1_rect.outline = rate_to_color(
+            rate1_value, Colors.GREEN_DARK, Colors.RED_DARK, COLOR_DIM
         )
+
         rate1_label.text = f"{int(round(rate1_value))}"
         rate1_label.color = rate_to_color(
             rate0_value, Colors.WHITE_DARK, Colors.WHITE_DARK, COLOR_DIM
-        ) if state["mode"] == MODE_ON else rate_to_color(
-                rate1_value, Colors.GREEN_DARK, Colors.RED_DARK, COLOR_DIM
         )
-        rate1_label.x = (
-            rate1_pos[0] + rate1_label_offset[0] if state["mode"] == MODE_ON else rate1_pos_dark[0]
-        )
-        rate1_label.y = (
-            rate1_pos[1] + rate1_label_offset[1] if state["mode"] == MODE_ON else rate1_pos_dark[1]
-        )
+        rate1_label.x = rate1_pos[0] + rate1_label_offset[0]
+        rate1_label.y = rate1_pos[1] + rate1_label_offset[1]
 
         # RATE 1
 
-        rate2_rect.outline = (
-            rate_to_color(rate2_value, Colors.GREEN_DARK, Colors.RED_DARK, COLOR_DIM)
-            if state["mode"] == MODE_ON
-            else Colors.OFF
+        rate2_rect.outline = rate_to_color(
+            rate2_value, Colors.GREEN_DARK, Colors.RED_DARK, COLOR_DIM
         )
+
         rate2_label.text = f"{int(round(rate2_value))}"
         rate2_label.color = rate_to_color(
-            rate0_value, Colors.WHITE_DARK, Colors.WHITE_DARK, COLOR_DIM
-        ) if state["mode"] == MODE_ON else rate_to_color(
-                rate2_value, Colors.GREEN_DARK, Colors.RED_DARK, COLOR_DIM
+            rate2_value, Colors.WHITE_DARK, Colors.WHITE_DARK, COLOR_DIM
         )
-        rate2_label.x = (
-            rate2_pos[0] + rate2_label_offset[0] if state["mode"] == MODE_ON else rate2_pos_dark[0]
-        )
-        rate2_label.y = (
-            rate2_pos[1] + rate2_label_offset[1] if state["mode"] == MODE_ON else rate2_pos_dark[1]
-        )        
+        rate2_label.x = rate2_pos[0] + rate2_label_offset[0]
+        rate2_label.y = rate2_pos[1] + rate2_label_offset[1]
+
 
 # APP LOGIC
 
@@ -398,7 +373,9 @@ try:
 
         # PERIODIC UPDATE: AGILE RATES
 
-        if ready_time and ((new_min and now.tm_min % OCTOPUS_UPDATE_MINS == 0) or not ready_agile):
+        if ready_time and (
+            (new_min and now.tm_min % OCTOPUS_UPDATE_MINS == 0) or not ready_agile
+        ):
             try:
                 state["rates"] = get_current_and_next_agile_rates(
                     requests, OCTOPUS_FETCH_PERIODS
@@ -409,7 +386,6 @@ try:
             except Exception as e:
                 logger(f"Error: Octopus Fetch Exception: {e}")
                 error_count += 1
-
 
         # HANDLE PERSISTENT ERRORS
 
