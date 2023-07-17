@@ -283,7 +283,7 @@ def draw(frame, now, state):
         )
         rate0_label.text = f"{int(round(rate0_value))}"
         rate0_label.color = rate_to_color(
-            rate0_value, Colors.GREEN_DARK, Colors.RED_DARK, COLOR_DIM
+            rate0_value, Colors.WHITE_DARK, Colors.WHITE_DARK, COLOR_DIM
         )
         rate0_label.x = rate0_pos[0] + rate0_label_offset[0]
         rate0_label.y = rate0_pos[1] + rate0_label_offset[1]
@@ -293,10 +293,9 @@ def draw(frame, now, state):
         rate1_rect.outline = rate_to_color(
             rate1_value, Colors.GREEN_DARK, Colors.RED_DARK, COLOR_DIM
         )
-
         rate1_label.text = f"{int(round(rate1_value))}"
         rate1_label.color = rate_to_color(
-            rate0_value, Colors.WHITE_DARK, Colors.WHITE_DARK, COLOR_DIM
+            rate1_value, Colors.WHITE_DARK, Colors.WHITE_DARK, COLOR_DIM
         )
         rate1_label.x = rate1_pos[0] + rate1_label_offset[0]
         rate1_label.y = rate1_pos[1] + rate1_label_offset[1]
@@ -306,7 +305,6 @@ def draw(frame, now, state):
         rate2_rect.outline = rate_to_color(
             rate2_value, Colors.GREEN_DARK, Colors.RED_DARK, COLOR_DIM
         )
-
         rate2_label.text = f"{int(round(rate2_value))}"
         rate2_label.color = rate_to_color(
             rate2_value, Colors.WHITE_DARK, Colors.WHITE_DARK, COLOR_DIM
